@@ -33,7 +33,7 @@
     "1-1": {
       "id": "1-1",
       "label": "跑通开发环境",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -115,7 +115,7 @@
     "1-1-1": {
       "id": "1-1-1",
       "label": "安装依赖与核心检查",
-      "status": "done",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-1",
       "children": [],
@@ -125,22 +125,22 @@
     "1-1-2": {
       "id": "1-1-2",
       "label": "运行 headless 任务",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-1",
       "children": [],
       "decisions": [],
-      "notes": "pnpm dsh --profile headless \"任务\" 需要 DEEPSEEK_API_KEY"
+      "notes": "dsh CLI 不自动读根 .env，需在启动环境 export DEEPSEEK_API_KEY；.env 里的裸 key 已包上变量名前缀。headless 任务返回 OK"
     },
     "1-1-3": {
       "id": "1-1-3",
       "label": "运行 Web UI demo",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-1",
       "children": [],
       "decisions": [],
-      "notes": ""
+      "notes": "需要先 pnpm run build（tsc lib + vite dist）；~/.dsh/profiles/node_modules 符号链接 fallback 指向仓库包的 lib/，构建前会报 Cannot find module。服务器 http://127.0.0.1:3080，HTTP 200"
     },
     "1-2-1": {
       "id": "1-2-1",
@@ -265,7 +265,7 @@
   },
   "metadata": {
     "created": "2026-08-15 11:25:33",
-    "updated": "2026-08-15 12:58:00",
-    "md_file": "learning_roadmap.md"
+    "updated": "2026-08-15 13:14:49",
+    "md_file": "D:\\workspace\\github\\jununfly\\ZHarness\\docs\\zj\\learning_roadmap.md"
   }
 }
