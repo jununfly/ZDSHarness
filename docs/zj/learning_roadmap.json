@@ -1,0 +1,271 @@
+{
+  "title": "ZHarness 学习计划",
+  "description": "资深程序员系统学习 DeepSeek Harness (ZHarness fork) 的路线图：从跑通 demo 到动手扩展",
+  "version": 1,
+  "nodes": {
+    "1": {
+      "id": "1",
+      "label": "ZHarness 学习计划",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": null,
+      "children": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "1-4",
+        "1-5"
+      ],
+      "decisions": [
+        {
+          "q": "学习顺序",
+          "answer": "先跑通再读码",
+          "note": "先跑 demo 建立体感，再读架构文档，避免空对空"
+        },
+        {
+          "q": "文档体系",
+          "answer": "文档是 CI 强制的",
+          "note": "doc-sync gate + 100% coverage 测试即规范，文档可信"
+        }
+      ],
+      "notes": ""
+    },
+    "1-1": {
+      "id": "1-1",
+      "label": "跑通开发环境",
+      "status": "in_progress",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-1-1",
+        "1-1-2",
+        "1-1-3"
+      ],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-2": {
+      "id": "1-2",
+      "label": "掌握架构总览",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-2-1",
+        "1-2-2",
+        "1-2-3"
+      ],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-3": {
+      "id": "1-3",
+      "label": "建立 Cordis 心智模型",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-3-1",
+        "1-3-2",
+        "1-3-3"
+      ],
+      "decisions": [
+        {
+          "q": "为什么先学 Cordis",
+          "answer": "它是整个架构的地基",
+          "note": "不理解插件/生命周期/事件模型，读任何 package 都是天书"
+        }
+      ],
+      "notes": ""
+    },
+    "1-4": {
+      "id": "1-4",
+      "label": "按包精读核心代码",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-4-1",
+        "1-4-2",
+        "1-4-3"
+      ],
+      "decisions": [
+        {
+          "q": "精读顺序",
+          "answer": "core 先行，能力包选一个",
+          "note": "core 是产品 API 主轴，能力包结构一致（Service Definition + provider + Consumer）"
+        }
+      ],
+      "notes": ""
+    },
+    "1-5": {
+      "id": "1-5",
+      "label": "动手扩展与验证",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-5-1",
+        "1-5-2",
+        "1-5-3"
+      ],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-1-1": {
+      "id": "1-1-1",
+      "label": "安装依赖与核心检查",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "corepack enable; pnpm install; pnpm run typecheck 作为 setup 完成标志"
+    },
+    "1-1-2": {
+      "id": "1-1-2",
+      "label": "运行 headless 任务",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "pnpm dsh --profile headless \"任务\" 需要 DEEPSEEK_API_KEY"
+    },
+    "1-1-3": {
+      "id": "1-1-3",
+      "label": "运行 Web UI demo",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-2-1": {
+      "id": "1-2-1",
+      "label": "读 docs/architecture.md",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "docs/architecture.md 是架构总览入口，AGENTS.md 讲文档规范"
+    },
+    "1-2-2": {
+      "id": "1-2-2",
+      "label": "读 README 与仓库布局",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-2-3": {
+      "id": "1-2-3",
+      "label": "理解一切皆插件哲学",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-3-1": {
+      "id": "1-3-1",
+      "label": "完成 cordis-tutorial 7 课",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "01-first-plugin → 07-into-the-harness 共 7 课"
+    },
+    "1-3-2": {
+      "id": "1-3-2",
+      "label": "掌握 effects 与事件模型",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-3-3": {
+      "id": "1-3-3",
+      "label": "理解服务与配置机制",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-4-1": {
+      "id": "1-4-1",
+      "label": "精读 packages/core 产品 API",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-4-2": {
+      "id": "1-4-2",
+      "label": "精读一个能力包 (fs/skill/llm)",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "能力包结构：Service Definition + provider + Consumer，看懂一个就懂全部"
+    },
+    "1-4-3": {
+      "id": "1-4-3",
+      "label": "用测试反向理解行为契约",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-5-1": {
+      "id": "1-5-1",
+      "label": "按 cookbook 加一个 tool",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "docs/cookbook/adding-a-tool 是最浅的切入"
+    },
+    "1-5-2": {
+      "id": "1-5-2",
+      "label": "理解 provider/Consumer 扩展点",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-5-3": {
+      "id": "1-5-3",
+      "label": "对比 upstream 验证 fork 状态",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    }
+  },
+  "metadata": {
+    "created": "2026-08-15 11:25:33",
+    "updated": "2026-08-15 11:26:16",
+    "md_file": "learning_roadmap.md"
+  }
+}
