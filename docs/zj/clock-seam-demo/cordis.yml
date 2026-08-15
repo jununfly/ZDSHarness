@@ -1,0 +1,8 @@
+# 组合：换 provider 只改这一行。
+# 用 SystemClock：'- ./clock-local.ts'
+# 用 FakeClock：'- ./clock-fake.ts'（config 注入固定时刻，实测见 README）
+- name: '@deepseek-ai/dsh-system-prompt'
+- name: '@deepseek-ai/dsh-tools'
+- name: './clock-local.ts'
+- name: './clock-tool.ts'
+- name: './demo.ts'

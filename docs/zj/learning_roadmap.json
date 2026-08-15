@@ -6,7 +6,7 @@
     "1": {
       "id": "1",
       "label": "ZHarness 学习计划",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": null,
       "children": [
@@ -126,7 +126,7 @@
     "1-5": {
       "id": "1-5",
       "label": "动手扩展与验证",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -134,7 +134,18 @@
         "1-5-2",
         "1-5-3"
       ],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-5 执行方案",
+          "answer": "串行 1-5-1→1-5-2→1-5-3；model 依赖先探 mock provider（Agent 查），无 mock 再问 key",
+          "note": "grilling Q7/Q6 全部同意推荐"
+        },
+        {
+          "q": "1-5 完成确认",
+          "answer": "完成。三个 demo 全部可运行+7 条契约测试通过（file-summary 3 + clock seam 4）；无需 LLM key（代码驱动管线）",
+          "note": "1-5-1/2/3 全 completed"
+        }
+      ],
       "notes": ""
     },
     "1-1-1": {
@@ -271,37 +282,55 @@
     "1-5-1": {
       "id": "1-5-1",
       "label": "按 cookbook 加一个 tool",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
-      "notes": "docs/cookbook/adding-a-tool 是最浅的切入"
+      "decisions": [
+        {
+          "q": "tool 选型与产出",
+          "answer": "先跑 cookbook greet 验证链路，再自创 file-summary（stat+前N行窗口，走 ctx.fs seam 复用 1-4-2 知识）；产出落 docs/zj/demos/；验证=跑通+最小 vitest",
+          "note": "grilling Q1/Q2/Q3 同意"
+        }
+      ],
+      "notes": "docs/zj/file-summary-demo/：file_summary 工具走 ctx.fs；demo 一次跑通 + 3/3 契约测试；无需密钥（代码驱动管线）。greet 链路已由 1-3 harness-tool-demo 验证过故未重跑"
     },
     "1-5-2": {
       "id": "1-5-2",
       "label": "理解 provider/Consumer 扩展点",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "产出形态",
+          "answer": "写最小三角色 demo（自造轻 seam，如 clock 时间服务：Definition→Provider→Consumer）+ 笔记；不复读文档不深读现有 seam",
+          "note": "grilling Q4 同意"
+        }
+      ],
+      "notes": "docs/zj/clock-seam-demo/：三角色（definition/local/fake/tool）+ provider 替换实证（SystemClock→FakeClock 精确回放 fixedAt，consumer 一行未改）+ 4/4 契约测试；踩中两个 cordis 硬约束：访问服务必须 inject、ToolRuntime 硬依赖 systemPrompt"
     },
     "1-5-3": {
       "id": "1-5-3",
       "label": "对比 upstream 验证 fork 状态",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "对比粒度",
+          "answer": "配 upstream remote + fetch（git 走 PS 通道盯症状 E），逐包 diff：fork 改了什么 vs upstream 演进什么，产出 docs/zj/upstream-compare.md",
+          "note": "grilling Q5 同意"
+        }
+      ],
+      "notes": "docs/zj/upstream-compare.md：squash 导入无共享历史→shallow fetch 快照对比。结论：upstream HEAD(08-13) 早于导入(08-15)，零落后；packages 源码零漂移；fork 改动=声明+docs/zj(+3570)。fetch 逢症状 E（ref 被吞）已手写恢复；https 代理失效改 SSH"
     }
   },
   "metadata": {
     "created": "2026-08-15 11:25:33",
-    "updated": "2026-08-15 22:03:35",
+    "updated": "2026-08-16 01:37:59",
     "md_file": "D:\\workspace\\github\\jununfly\\ZHarness\\docs\\zj\\learning_roadmap.md"
   }
 }

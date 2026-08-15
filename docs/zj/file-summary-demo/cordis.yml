@@ -1,0 +1,10 @@
+# 组合：服务定义/提供者由包名装载，工具与观察者是本地插件。
+# dsh-fs-local 默认导出 LocalFileSystem（FileSystem extends Service，
+# super(ctx, 'fs')），装载后自注册为 ctx.fs —— fs-local 包本身不是
+# apply 形插件，而是 Cordis Service 类插件。
+- name: '@deepseek-ai/dsh-system-prompt'
+- name: '@deepseek-ai/dsh-tools'
+- name: '@deepseek-ai/dsh-fs-local'
+- name: './observation-logger.ts'
+- name: './file-summary-tool.ts'
+- name: './demo.ts'

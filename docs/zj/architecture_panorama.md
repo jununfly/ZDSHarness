@@ -2,7 +2,7 @@
 
 > **数据源文件**：本 md 是唯一数据源，HTML 由 `gen_panorama_html.py` 从本文件生成，禁止手改 HTML。
 > **同步策略**：随学习路线图（`learning_roadmap.json`）进度逐层展开。每节标注解锁节点与状态。
-> 最后更新：2026-08-16（L5 四族深潜）
+> 最后更新：2026-08-16（L6 扩展点施工图：加 tool / Provider-Consumer / fork 治理）
 
 ## 进度索引
 
@@ -21,6 +21,9 @@
 | L5 | [深潜：agent 族](#l5-深潜agent-族) | 2026-08-16 | ✅ 已展开（C1→C4 + 动态图） |
 | L5 | [深潜：tools 族](#l5-深潜tools-族) | 2026-08-16 | ✅ 已展开（C1→C4 + 动态图） |
 | L5 | [深潜：fs 族](#l5-深潜fs-族) | 2026-08-16 | ✅ 已展开（C1→C4 + 动态图） |
+| L6 | [施工图：按 cookbook 加一个 tool](#l6-施工图按-cookbook-加一个-tool) | 1-5-1 | 🔨 施工图就绪（待动手） |
+| L6 | [施工图：Provider/Consumer 三角色扩展点](#l6-施工图providerconsumer-三角色扩展点) | 1-5-2 | 🔨 施工图就绪（待动手） |
+| L6 | [施工图：fork 治理与 upstream 对比](#l6-施工图fork-治理与-upstream-对比) | 1-5-3 | 🔨 施工图就绪（待动手） |
 
 ---
 
@@ -901,6 +904,221 @@ sequenceDiagram
 | 写入原子性 | staging 文件同目录写入 → rename 替换；POSIX 0o700/0o600，Windows 拷贝父目录 DACL |
 
 契约测试背书（fs-local 129 + tool-fs 73 + integration 33）：并发守卫一赢一 stale；成功编辑刷新 version；二进制旧文件 `before:null` 仍可覆盖；read→write→edit→再读链路闭环。
+
+---
+
+## L6 施工图：扩展点与 fork 治理（1-5 动手扩展）
+
+> L1–L5 回答「harness 是什么」；L6 回答「怎么改它」。三张施工图分别对应路线图 1-5-1 / 1-5-2 / 1-5-3，
+> 依据 `docs/cookbook/adding-a-tool.zh.md`、`docs/user/develop/`、`docs/capability-seams.zh.md` 与 README fork 声明。
+> 状态：施工图就绪，动手产物（demo + 测试 + 对比笔记）完成后回填。
+
+### L6 施工图：按 cookbook 加一个 tool
+
+#### C1 上下文——开发者在哪个面上动手
+
+```mermaid
+flowchart LR
+    DEV["👨‍💻 扩展开发者"] -->|"①写插件文件<br/>(name/inject/apply)"| PLUGIN["插件文件<br/>(tool definition)"]
+    PLUGIN -->|"②ctx.tools.register<br/>(defineTool)"| TR["ToolRuntime<br/>packages/core/tools"]
+    DEV -->|"③pnpm dsh web --patch<br/>cordis.yml"| WEB["dsh web 运行时<br/>Web UI 验证"]
+    WEB -.装配.-> TR
+    TR --> LOOP["agent-loop 五阶段管线<br/>(L5 tools 族)"]
+    style DEV fill:#e8f0e8
+    style PLUGIN fill:#fdf6e3
+    style TR fill:#e8eef7
+```
+
+三步法（cookbook 原文路径 `docs/cookbook/adding-a-tool.zh.md` + 教程 `docs/user/develop/basic/tool.zh.md`）：
+**① 导出插件三件套**（`name` / `inject = ['tools']` / `apply(ctx)`）→ **② 在 apply 里 `ctx.tools.register(defineTool({...}))`** → **③ `pnpm dsh web --patch ./plugin/cordis.yml` 装配运行**。
+
+#### C2 容器——defineTool 的四块内部结构
+
+```mermaid
+flowchart TB
+    subgraph DT["defineTool({...}) 工具定义"]
+        P["parameters<br/>args schema：自动推导<br/>+ 装配期类型校验"]
+        OS["output.schema<br/>规范返回值契约"]
+        OR["output.render<br/>模型可见内容投影"]
+        EX["execute(args, exec)<br/>必须遵守 exec.signal"]
+    end
+    P -->|materialize args| EX
+    EX -->|结果| OS
+    OS -->|投影| OR
+    OR -->|tool/result| M["模型上下文"]
+    style DT fill:#fdf6e3
+```
+
+与 L5 tools 族五阶段管线的咬合：`parameters` 参与 **prepare 阶段**的 materialize args；`execute` 落在 **dispatch 阶段**（fuse 信号 = caller cancel + exec.signal）；`output.schema/render` 参与 Finish 阶段的 materialize → finalizeContent → materialize。
+
+#### C3 组件——注册与执行时序
+
+```mermaid
+sequenceDiagram
+    participant DEV as 开发者插件
+    participant Ctx as ctx (cordis)
+    participant TR as ToolRuntime
+    participant LOOP as agent-loop
+
+    Note over DEV,Ctx: 装配期
+    DEV->>Ctx: ctx.plugin(插件) → apply(ctx)
+    DEV->>TR: ctx.tools.register(defineTool)
+    TR->>TR: schema 校验 + 注册进 ToolLayer
+    Note over LOOP: 运行期（模型发起调用）
+    LOOP->>TR: resolveExecution（view() 可见性解析）
+    TR->>TR: prepare: materialize args(parameters)
+    TR->>DEV: execute(args, exec)
+    DEV-->>TR: 规范结果（output.schema 校验）
+    TR-->>LOOP: tool/result + output.render 投影
+```
+
+#### C4 代码——最小可用骨架
+
+| 契约 | 内容 |
+|---|---|
+| 插件导出 | `export const name = 'my-tool'`；`export const inject = ['tools']`；`export function apply(ctx) {...}` |
+| 注册 API | `ctx.tools.register(defineTool({ name, description, parameters, output, execute }))`——**不是** `ToolRuntime.registerTool` |
+| 取消契约 | `execute(args, exec)` 内必须响应 `exec.signal`（ABORTED / ABORTED_BEFORE_DISPATCH 二分，见 L5 tools 族） |
+| 验证命令 | `pnpm dsh web --patch ./<plugin-dir>/cordis.yml`（Web UI 中手工验证） |
+| 待动手确认 | 示例为 `greet`（name 参数 → `Hello, ${name}!`）；计划先跑 greet 验证链路，再自创走 `ctx.fs` seam 的实用 tool |
+
+---
+
+### L6 施工图：Provider/Consumer 三角色扩展点
+
+#### C1 上下文——能力按三角色拆分的思想
+
+```mermaid
+flowchart LR
+    subgraph CAP["一个能力（如 Bash / fs / web）"]
+        DEF["Service Definition<br/>定义契约（abstract class + Service）"]
+        PROV["Service Provider<br/>提供实现（可替换）"]
+        CONS["Consumer<br/>消费能力（tool / 插件）"]
+    end
+    DEF -- "被实现" --> PROV
+    PROV -- "ctx.plugin() 装配" --> CTX["@deepseek-ai/cordis Context"]
+    DEF -- "module augmentation<br/>declare module { interface Context }" --> CTX
+    CONS -- "inject: ['myCap']" --> CTX
+    CTX -->|"ctx.myCap"| CONS
+    style DEF fill:#e8eef7
+    style PROV fill:#e8f0e8
+    style CONS fill:#fdf6e3
+```
+
+核心：**接口与实现分离**（同 agent 族的 Agent/句柄分离同构）——Definition 声明 `ctx.myCap` 的类型，Provider 决定它是本地/远程/E2B 实现，Consumer 只面向 Definition 编程。
+
+#### C2 容器——以 Bash 为例的三包布局
+
+```mermaid
+flowchart TB
+    subgraph 三包["dsh-shell → dsh-bash-local → dsh-tool-bash"]
+        S["dsh-shell<br/>定义（shell 契约）"]
+        B["dsh-bash-local<br/>provider（本地进程实现）"]
+        TB["dsh-tool-bash<br/>consumer（bash 工具）"]
+    end
+    S --- B --- TB
+    FS["同构对照（fs，L5 已深潜）：<br/>dsh-fs 定义 → dsh-fs-local 实现 → dsh-tool-fs 工具"]
+    TB -.对照.-> FS
+    style S fill:#e8eef7
+    style B fill:#e8f0e8
+    style TB fill:#fdf6e3
+```
+
+#### C3 组件——seam 清单与 staged 接口
+
+| Seam | 位置/用法 | 一句话 |
+|---|---|---|
+| `ctx.fs` | FileSystem provider seam | L5 fs 族：观察-守卫闭环的载体 |
+| `ctx.web` | Web access provider registry | 网络访问的准入层 |
+| `ctx.subagents` | 子 agent 派发 | agent 平面的扩展行 |
+| `ctx.skills` | skill 装载 | 技能注入缝 |
+| `SettingsProvider` | `dsh-settings` | 设置来源可插拔（agent-default-model 消费） |
+| `[TOOL_RUNTIME_SCHEDULER]` | tools ↔ loop staged 接口 | symbol 弱耦合：loop 消费 scheduler 而不 import 具体类型 |
+| `ctx.inject([...])` 延迟注入 | 如 `['attachments']` / `['codeRuntime']` | mount 时才要求依赖就绪（agent-tool-presentation 的等待语义） |
+
+```mermaid
+sequenceDiagram
+    participant DEF as Definition 包
+    participant PROV as Provider 包
+    participant CTX as cordis Context
+    participant CONS as Consumer 工具
+
+    Note over DEF: abstract class MyCap extends Service
+    DEF->>CTX: declare module 声明 interface Context { myCap }
+    Note over PROV: apply(ctx) { ctx.plugin(MyCapLocal) }
+    PROV->>CTX: 装配实现（可整体替换：local/E2B/远程）
+    Note over CONS: export const inject = ['tools','myCap']
+    CONS->>CTX: 声明依赖（缺依赖则装配失败，fail-fast）
+    CTX-->>CONS: ctx.myCap 就绪
+    CONS->>DEF: 只面向契约编程
+```
+
+#### C4 代码——三角色标准写法
+
+| 角色 | 标准写法 |
+|---|---|
+| Definition | `abstract class MyCapService extends Service` + `declare module '@deepseek-ai/cordis' { interface Context { myCap: MyCapService } }` |
+| Provider | `apply(ctx) { ctx.plugin(MyCapLocal) }`——一个 Definition 可有多个 Provider |
+| Consumer | `export const inject = ['tools', 'myCap']`，体内访问 `ctx.myCap` |
+| 待动手确认 | 计划自造轻量 seam（如 `dsh-clock` 时间服务）走完三角色；`inject: ['sessions']` 是仓库内最常见的依赖声明（十余处） |
+
+---
+
+### L6 施工图：fork 治理与 upstream 对比
+
+#### C1 上下文——双仓关系
+
+```mermaid
+flowchart LR
+    UP["deepseek-ai/deepseek-harness<br/>upstream（原项目，developer preview）"]
+    FORK["jununfly/ZHarness<br/>downstream fork（origin）"]
+    UP -->|"fork + 持续演化"| FORK
+    FORK -->|"rebase/merge 决策<br/>（1-5-3 产出）"| UP
+    style UP fill:#e8eef7
+    style FORK fill:#e8f0e8
+```
+
+README 首行声明：downstream fork of `deepseek-ai/deepseek-harness`，maintained by jununfly，原版权与许可条款适用（见 LICENSE / THIRD_PARTY_NOTICES.md）。
+
+#### C2 容器——本地 git 现状与目标状态
+
+```mermaid
+flowchart TB
+    subgraph NOW["现状（已实测 2026-08-16）"]
+        N1["remotes: 仅 origin<br/>git@github.com:jununfly/ZHarness.git"]
+        N2["分支: master<br/>远端跟踪: origin/master"]
+    end
+    subgraph GOAL["1-5-3 目标状态"]
+        G1["git remote add upstream<br/>https://github.com/deepseek-ai/deepseek-harness.git"]
+        G2["fetch upstream<br/>（PowerShell 通道 + 盯症状 E）"]
+        G3["逐包 diff → upstream-compare.md<br/>fork 改了什么 vs upstream 演进了什么"]
+    end
+    NOW ==>|施工| GOAL
+    style NOW fill:#fdf6e3
+    style GOAL fill:#e8f0e8
+```
+
+#### C3 组件——对比分析的三问框架
+
+```mermaid
+flowchart TB
+    Q1["Q1 落后多少？<br/>upstream/master 领先的 commit 数<br/>+ 涉及哪些 packages/"]
+    Q2["Q2 本 fork 改了什么？<br/>fork 独有 commit 清单<br/>（docs/zj 学习产物 + 任何源码改动）"]
+    Q3["Q3 rebase 还是继续漂移？<br/>冲突面评估（若 fork 未改源码<br/>则 rebase 成本≈0）"]
+    Q1 --> R["docs/zj/upstream-compare.md"]
+    Q2 --> R
+    Q3 --> R
+    style R fill:#e8f0e8
+```
+
+#### C4 代码——操作契约与环境约束
+
+| 契约 | 内容 |
+|---|---|
+| fetch 通道 | **PowerShell 工具**（Git Bash 侧 git 静默失效，症状 F；输出失效时用 WriteAllText 落文件 + Read 读回） |
+| 症状 E 防御 | fetch/push 后 `refs/remotes/upstream/*` 可能被异步吞——单独命令手写 loose ref，远端真相以 `git ls-remote` 为准 |
+| 对比命令族 | `git rev-list --left-right --count master...upstream/master` / `git diff --stat master upstream/master -- packages/` / `git log --no-merges master..upstream/master` |
+| 产出物 | `docs/zj/upstream-compare.md`（逐包 diff 表 + rebase 建议） |
 
 ---
 

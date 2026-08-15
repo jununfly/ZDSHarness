@@ -1,0 +1,8 @@
+第 1 行：观察-守卫闭环的最小切片
+第 2 行：file_summary 工具只读不写
+第 3 行：stat 拿版本，readText 拿内容
+第 4 行：fs/observed 把版本记账给监听者
+第 5 行：preview 由 output.render 投影给模型
+第 6 行：本文件是 demo 的样例输入
+第 7 行：全部 8 行都会被计入 totalLines
+第 8 行：完
