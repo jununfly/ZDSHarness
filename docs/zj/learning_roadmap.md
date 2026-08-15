@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `learning_roadmap.json` | 最后更新: 2026-08-15 17:02:18
+> 数据文件: `learning_roadmap.json` | 最后更新: 2026-08-15 22:03:35
 
 [~][X+] 1. ZHarness 学习计划
 ├── [x][Y+] 1-1. 跑通开发环境
@@ -16,10 +16,10 @@
 │   ├── [x][Y+] 1-3-1. 完成 cordis-tutorial 7 课
 │   ├── [x][Y+] 1-3-2. 掌握 effects 与事件模型
 │   └── [x][Y+] 1-3-3. 理解服务与配置机制
-├── [ ][Y+] 1-4. 按包精读核心代码
-│   ├── [ ][Y+] 1-4-1. 精读 packages/core 产品 API
-│   ├── [ ][Y+] 1-4-2. 精读一个能力包 (fs/skill/llm)
-│   └── [ ][Y+] 1-4-3. 用测试反向理解行为契约
+├── [x][Y+] 1-4. 按包精读核心代码
+│   ├── [x][Y+] 1-4-1. 精读 packages/core 产品 API
+│   ├── [x][Y+] 1-4-2. 精读一个能力包 (fs/skill/llm)
+│   └── [x][Y+] 1-4-3. 用测试反向理解行为契约
 └── [ ][Y+] 1-5. 动手扩展与验证
     ├── [ ][Y+] 1-5-1. 按 cookbook 加一个 tool
     ├── [ ][Y+] 1-5-2. 理解 provider/Consumer 扩展点

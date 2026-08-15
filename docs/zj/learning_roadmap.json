@@ -81,7 +81,7 @@
     "1-4": {
       "id": "1-4",
       "label": "按包精读核心代码",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -94,6 +94,31 @@
           "q": "精读顺序",
           "answer": "core 先行，能力包选一个",
           "note": "core 是产品 API 主轴，能力包结构一致（Service Definition + provider + Consumer）"
+        },
+        {
+          "q": "core 精读范围",
+          "answer": "6 主轴精读 + 2 小包略读",
+          "note": "agent/agent-loop/session/tools/system-prompt/scope 精读；agent-default-model、agent-tool-presentation 跑 README + 扫 src 入口"
+        },
+        {
+          "q": "产出形态",
+          "answer": "每包笔记 + 全景 L4 解锁 + 1-2 个契约 demo",
+          "note": "md 笔记落 docs/zj/；L4 按包解锁；demo 只挑值得实证的契约"
+        },
+        {
+          "q": "能力包选择",
+          "answer": "fs 组（fs + fs-local + tool-fs）",
+          "note": "抽象接口→本地实现→工具封装三件套；与 1-5-1 加 tool 衔接最紧；llm 组留待需要时深入"
+        },
+        {
+          "q": "测试反向理解方式",
+          "answer": "读为主 + 跑 2-3 个关键契约",
+          "note": "对象：agent-loop turn 生命周期、session 事件追加/回放、tools 执行管线；1-4-2 能力包测试顺带"
+        },
+        {
+          "q": "1-4 精读完成，L4 解锁？",
+          "answer": "完成。6 主轴（session/tools/system-prompt/scope/agent/agent-loop）+ 2 略读（agent-composition）+ fs 三件套 + 693 契约测试验证；notes 10 篇 + contracts-verified.md",
+          "note": "L4 全景已展开，1-5 待办"
         }
       ],
       "notes": ""
@@ -216,7 +241,7 @@
     "1-4-1": {
       "id": "1-4-1",
       "label": "精读 packages/core 产品 API",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-4",
       "children": [],
@@ -226,7 +251,7 @@
     "1-4-2": {
       "id": "1-4-2",
       "label": "精读一个能力包 (fs/skill/llm)",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-4",
       "children": [],
@@ -236,7 +261,7 @@
     "1-4-3": {
       "id": "1-4-3",
       "label": "用测试反向理解行为契约",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-4",
       "children": [],
@@ -276,7 +301,7 @@
   },
   "metadata": {
     "created": "2026-08-15 11:25:33",
-    "updated": "2026-08-15 17:02:18",
+    "updated": "2026-08-15 22:03:35",
     "md_file": "D:\\workspace\\github\\jununfly\\ZHarness\\docs\\zj\\learning_roadmap.md"
   }
 }

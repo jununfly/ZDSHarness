@@ -11,12 +11,12 @@
 | L1 | [系统上下文](#l1-系统上下文) | 1-2-1 | ✅ 已展开 |
 | L2 | [容器](#l2-容器) | 1-2-2 | ✅ 已展开（实测校准） |
 | L3 | [组件：核心包](#l3-组件核心包) | 1-2-1 | ✅ 已展开 |
-| L3 | [组件：能力缝 seam](#l3-组件能力缝-seam) | 1-4-2 | 🔒 待展开（已有骨架） |
+| L3 | [组件：能力缝 seam](#l3-组件能力缝-seam) | 1-4-2 | ✅ 已展开（fs 三件套实证） |
 | L3 | [组件：Turn/Step 事件流](#l3-组件turnstep-事件流) | 1-2-1 | ✅ 已展开 |
 | L3 | [组件：Profile/Bundle 组合](#l3-组件profilebundle-组合) | 1-2-1 | ✅ 已展开 |
 | L3 | [组件：插件形态与注册原语](#l3-组件插件形态与注册原语) | 1-2-3 | ✅ 已展开（demo 实证） |
 | L3 | [组件：插件运行时机制](#l3-组件插件运行时机制) | 1-3 | ✅ 已展开（7 课 + 3 demo 实证） |
-| L4 | [代码：关键接口](#l4-代码关键接口) | 1-4 | 🔒 待展开 |
+| L4 | [代码：关键接口](#l4-代码关键接口) | 1-4 | ✅ 已展开（6 主轴 + 2 略读 + 契约验证） |
 
 ---
 
@@ -452,11 +452,43 @@ flowchart LR
 
 ## L4 代码：关键接口
 
-> 🔒 待 1-4（按包精读）解锁。届时补充：
-> - `ctx.on()` 注册语义与 unwind（effect 本体见 L3「插件运行时机制」）
-> - declaration merging 事件表（`SessionEventMap` / `AgentEvents`）
-> - `Agent` 接口签名与 agent handle 取消语义
-> - 典型能力包的三件套代码位置（以 fs 或 skill 为例）
+> 已由 1-4（按包精读 + 测试验证）解锁。笔记在 `notes/core/*.md`（session/tools/system-prompt/scope/agent/agent-loop/agent-composition）、`notes/capabilities/fs.md`、`notes/contracts-verified.md`。下方为骨架承诺四点的落定结论。
+
+### `ctx.on()` 注册语义与 unwind
+
+- 事件监听 = effect（scope 化注册，fiber dispose 时自动注销）；事件**沿 scope 链上行，绝不下行**（ancestor listener 收 descendant dispatch，tag 低于 dispatch key 的一律排除——`scopeTarget` 准入 filter）
+- 发布语义按事件而异：`session/created`/`session/disposed` 逐 listener **contained**（listener 抛错不阻断其他 listener，且创建期抛错触发 rollback）；`session/flush` **parallel**；`session/event` 在 append **commit 点之后**发布（dispatch 解析先于 commit，instrumentation 失败不能隐藏已记录事件）
+- 事件名即类型（declaration merging 事件表），见下
+
+### declaration merging 事件表
+
+| 事件族 | 声明处 | 典型事件 | 语义 |
+|---|---|---|---|
+| `session/*` | `packages/core/session/src/index.ts`（`SessionEventMap`） | `session/created`、`session/event`、`session/disposed`、`session/flush` | 会话生命周期 + append 发布 |
+| `agent/*` | `packages/core/agent/` | turn 级 lifecycle、request/response、cancelled | 一次 turn 的完整生命周期 |
+| `tools/*` | `packages/core/tools/src/index.ts` | `tools/pre-execute`、`tools/execute`、`tools/post-execute`（waterfall）、`tools/result`（emit）、`tools/change`（**故意不 scope-filtered**） | 执行管线五阶段扩展点 |
+| `fs/*` | `packages/fs/fs/src/index.ts`（类型声明） | `fs/write-intent`、`fs/edit-intent`（waterfall 单槽）、`fs/observed` | 观察-守卫闭环 |
+
+### `Agent` 接口签名与取消语义
+
+- Agent = preset 组合 + scope carrier（agent 身份即 `ScopeKey`）；`agent-default-model`（默认模型选择，settings live 读取）与 `agent-tool-presentation`（preset 声明工具呈现）是 agent 平面组合行
+- 取消两分：`ABORTED`（body 已启动）/ `ABORTED_BEFORE_DISPATCH`（未启动）；执行管线从不 abandon body promise；`fuseToolSignals` 手工 fuse dispatch-scoped 信号
+- session store 生命周期三分：`create = prepare + enter + announce` 折叠进单个 effect；enter 是重复 id 权威碰撞边界；detach 在 announcing/appending 期间 latch `detachRequested` 等 unwind；flush 是唯一入口
+
+### 能力包三件套代码位置（以 fs 为例）
+
+```
+packages/fs/fs/          契约层：FileSystem 抽象（全 abstract）+ FsTargetKey/FsVersion branded + 13 错误码
+packages/fs/fs-local/    实现层：withLock FIFO 串行化 + realpath 身份 + staging 原子替换 + 版本守卫 + NUL 采样二进制拒绝
+packages/fs/tool-fs/     工具层：read/write/edit/read_image 注册 + systemPrompt section（order 100-102）+ 观察-守卫接线 + 沙箱升级
+```
+
+三层靠三根线咬合：**intent/guard 单槽（waterfall，默认 undefined = 无条件）+ `fs/observed` 事件 + replay-safe 呈现 meta**（tool/result meta 是 opaque JSON，session append 校验可序列化，presentResult 从持久化 meta 恢复 diff/行窗口）。
+
+### 契约验证结论（1-4-3，693 测试通过）
+
+- **0 契约失败**：session 77/77、surface 57/57、tools 136/136、code-mode 89/89、loop 54/54、tool-calls 21/21、tool-fs 73/73、integration 33/33、fs-local 129/140（11 失败 = Windows 沙箱 symlink/嵌套 code runtime 环境限制）
+- 关键语义获测试名背书：stale version 检查**先于** literal 匹配；目标删除报 `FS_STALE_VERSION`（版本语义非 not-found）；并发守卫一赢一 stale；成功写刷新观察版本；二进制旧文件 `before:null` 仍可覆盖；tool/result replace 只能改 content；空 content assistant/message derive 为 null 被跳过；surface 事件缺 marker 在 runtime 拒绝
 
 ---
 
