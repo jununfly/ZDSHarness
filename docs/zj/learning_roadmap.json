@@ -47,7 +47,7 @@
     "1-2": {
       "id": "1-2",
       "label": "掌握架构总览",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -155,22 +155,33 @@
     "1-2-2": {
       "id": "1-2-2",
       "label": "读 README 与仓库布局",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-2",
       "children": [],
       "decisions": [],
-      "notes": ""
+      "notes": "已读根 README+packages/README.md+docs/development.md+AGENTS.md，实测校准 L2。仓库布局速查：顶层 12 目录（apps/ 可执行入口 cli+web；packages/ 49 组；vendor/ Cordis；python/ SDK；native/ landlock；examples/；.agents/；docs/；scripts/；website/；assets/；patches/）。packages 按角色 6 类：core 产品轴 / llm+执行能力 / 会话持久化 / 组合自修改（bundle+extensions+hooks）/ 协议 GUI（sdk+acp+api+typert+host+client+boot+interaction+mcp）/ 支撑（examples+test-support+util+runtime-diagnostics）。TypeScript 双聚合（host/client）因 Context declaration merge 冲突分开，构建顺序 tsc host→tsdown host(Typert)→tsc client→tsdown client→build:web；pre-push hook=typecheck。AGENTS.md 布局段已过时（缺 apps/assets/patches、mcp/runtime-diagnostics 登记），已实测校准进 architecture_panorama.md L2"
     },
     "1-2-3": {
       "id": "1-2-3",
       "label": "理解一切皆插件哲学",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "一切皆插件哲学如何验收？",
+          "answer": "B+A：先动手后总结",
+          "note": "B=最小 Cordis 插件 demo 跑通（注册 service+监听事件+effect 回收）；A=哲学总结落 notes"
+        },
+        {
+          "q": "一切皆插件哲学如何验收？",
+          "answer": "B+A：先动手后总结",
+          "note": "B=最小 Cordis 插件 demo 跑通（注册 service+监听事件+effect 回收）；A=哲学总结落 notes"
+        }
+      ],
+      "notes": "一切皆插件哲学：最小 Cordis demo 实证（docs/zj/plugin-philosophy-demo/，可运行）。四文件：greeter.ts（类插件 Service+super(ctx,'greeter') 注册+声明合并）、watcher.ts（函数插件 ctx.on 监听+ctx.effect 计时器）、main.ts（inject 依赖+ctx.plugin 挂子插件+800ms 后 fiber.dispose()）、cordis.yml（组合清单）。输出验证五思想：Hello world!（service 消费）/event 行（解耦广播）/tick×3（effect 运行）/cleaned up（卸载自动回收）/disposed 后无 tick（回收真实）。无特权核=无引导代码、无手动簿记，插件描述贡献、yml 组合、Cordis 管生命周期；dsh 的 ctx.tools/ctx.llm/ctx.sessions/agent-loop 都是这样挂的插件。坑：ctx.plugin 返回 fiber 是 PromiseLike，await 等加载完成否则事件丢失"
     },
     "1-3-1": {
       "id": "1-3-1",
@@ -265,7 +276,7 @@
   },
   "metadata": {
     "created": "2026-08-15 11:25:33",
-    "updated": "2026-08-15 14:19:33",
+    "updated": "2026-08-15 16:22:26",
     "md_file": "D:\\workspace\\github\\jununfly\\ZHarness\\docs\\zj\\learning_roadmap.md"
   }
 }
