@@ -958,18 +958,18 @@ sequenceDiagram
     participant DEV as 开发者插件
     participant Ctx as ctx (cordis)
     participant TR as ToolRuntime
-    participant LOOP as agent-loop
+    participant AL as agent-loop
 
     Note over DEV,Ctx: 装配期
     DEV->>Ctx: ctx.plugin(插件) → apply(ctx)
     DEV->>TR: ctx.tools.register(defineTool)
     TR->>TR: schema 校验 + 注册进 ToolLayer
-    Note over LOOP: 运行期（模型发起调用）
-    LOOP->>TR: resolveExecution（view() 可见性解析）
+    Note over AL: 运行期（模型发起调用）
+    AL->>TR: resolveExecution（view() 可见性解析）
     TR->>TR: prepare: materialize args(parameters)
     TR->>DEV: execute(args, exec)
     DEV-->>TR: 规范结果（output.schema 校验）
-    TR-->>LOOP: tool/result + output.render 投影
+    TR-->>AL: tool/result + output.render 投影
 ```
 
 #### C4 代码——最小可用骨架
