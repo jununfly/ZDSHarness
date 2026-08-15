@@ -47,7 +47,7 @@
     "1-2": {
       "id": "1-2",
       "label": "掌握架构总览",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -56,7 +56,7 @@
         "1-2-3"
       ],
       "decisions": [],
-      "notes": ""
+      "notes": "架构全景活文档：docs/zj/architecture_panorama.md（C4+mermaid，唯一数据源）→ gen_panorama_html.py 生成 architecture_panorama.html。每完成一个学习节点同步展开对应 C4 层：1-2 展开 L1/L2/L3 骨架，1-4-2 展开 seam 细节，1-3/1-4 展开 L4 接口层。改 md 后重跑生成脚本"
     },
     "1-3": {
       "id": "1-3",
@@ -145,12 +145,12 @@
     "1-2-1": {
       "id": "1-2-1",
       "label": "读 docs/architecture.md",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-2",
       "children": [],
       "decisions": [],
-      "notes": "docs/architecture.md 是架构总览入口，AGENTS.md 讲文档规范"
+      "notes": "已精读。五大支柱：①Cordis 插件树（无特权核，一切皆插件，注册即 effect）②Profile/Bundle 分层组合（dsh-base → web-app/headless，patch 逐层覆盖，dsh --dump-config 可见）③Turn/Step 流（step=一次模型请求+工具，turn 由 inbox 驱动，waterfall 事件链 pre-step→request→llm/stream→tools pipeline）④Session log 是唯一真相（Model-visible means logged，deriveMessages() 从日志投影模型历史）⑤Capability seam 三件套（Service Definition+Provider+Consumer，换 provider 即换整个执行世界）。新行为落点表：cookbook/extension-cookbook.md 是索引入口"
     },
     "1-2-2": {
       "id": "1-2-2",
@@ -265,7 +265,7 @@
   },
   "metadata": {
     "created": "2026-08-15 11:25:33",
-    "updated": "2026-08-15 13:14:49",
+    "updated": "2026-08-15 14:19:33",
     "md_file": "D:\\workspace\\github\\jununfly\\ZHarness\\docs\\zj\\learning_roadmap.md"
   }
 }
