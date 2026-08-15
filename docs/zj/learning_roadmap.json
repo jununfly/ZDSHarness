@@ -61,7 +61,7 @@
     "1-3": {
       "id": "1-3",
       "label": "建立 Cordis 心智模型",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -186,32 +186,32 @@
     "1-3-1": {
       "id": "1-3-1",
       "label": "完成 cordis-tutorial 7 课",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-3",
       "children": [],
       "decisions": [],
-      "notes": "01-first-plugin → 07-into-the-harness 共 7 课"
+      "notes": "7 课要点速查（01-04 已于 1-2-3 精读+实证，05-07 本轮补齐）：05 配置=同名导出 Config 接口+schema（Standard Schema V1，schemastery 实现），apply 前验证，失败→ValidationError→fiber FAILED 绝不启动，默认值补齐；!!js 仅 config/disabled 字段有效可环境门控。06 组合与 HMR=条目元数据 id（稳定标识区分修改vs重建）/disabled（保留条目不挂载）/组嵌套+isolate（服务实例隔离）；cordis-plugin-hmr 保存→卸载旧（effect 回卷）→加载新；无 id 条目任何编辑=删除+重建；PENDING 诊断=ctx.registry 枚举 fiber.state。07 harness 桥=ctx.tools.register(defineTool) 注册可模型调用工具，组合须含 dsh-system-prompt 否则永久 PENDING，tools/result 在结果物化时发出（execute 兑现前）；正式化 harness-tool-demo（docs/zj/）"
     },
     "1-3-2": {
       "id": "1-3-2",
       "label": "掌握 effects 与事件模型",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-3",
       "children": [],
       "decisions": [],
-      "notes": ""
+      "notes": "events-effects-demo（docs/zj/events-effects-demo/，可运行）。实证 5 分发模式：emit 同步广播 fan-out（监听器互不知晓）/ parallel 并发等待 Promise<void>（listener 2 先完成实证并发）/ serial 首个非空胜出停止后续 / bail serial 同步版 / waterfall 中间件链可包装（toUpperCase）可否决（blocked 短路）。纪律：观察者必须调 next() 否则吞下游。effect：ctx.on/ctx.plugin/服务注册本身是 effect 卸载自动撤销；外部资源 ctx.effect(cb) 返回 disposer 卸载时运行；fiber.dispose() 递归卸载+回卷全部 effect（tick 停止实证）。fiber 状态机 PENDING→LOADING→ACTIVE→UNLOADING→DISPOSED，apply/配置校验异常→FAILED；PENDING 合法静默"
     },
     "1-3-3": {
       "id": "1-3-3",
       "label": "理解服务与配置机制",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-3",
       "children": [],
       "decisions": [],
-      "notes": ""
+      "notes": "config-service-demo（docs/zj/config-service-demo/，可运行）。服务三件套：Service 子类+super(ctx,'greeter')+declare module 声明合并；inject 硬依赖（移除 provider→consumer PENDING 静默等待），ctx.get 可选探测。配置机制实证：同名导出 Config 接口+schema；手写最小 Standard Schema V1 验证器（零依赖，证明 schemastery 只是普通接口）——正常配置 greeting 未提供被默认值补齐为 Hello；invalid/cordis.yml 传 targets:'not-an-array' → ValidationError 'expected array but got' (at targets) → fiber FAILED → exit 1，插件绝不启动。服务注册是 effect：provider 卸载→依赖方随之卸载→恢复自动重载（替换 provider 的机制基础）"
     },
     "1-4-1": {
       "id": "1-4-1",
@@ -276,7 +276,7 @@
   },
   "metadata": {
     "created": "2026-08-15 11:25:33",
-    "updated": "2026-08-15 16:22:26",
+    "updated": "2026-08-15 17:02:18",
     "md_file": "D:\\workspace\\github\\jununfly\\ZHarness\\docs\\zj\\learning_roadmap.md"
   }
 }

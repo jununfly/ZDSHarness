@@ -39,3 +39,6 @@ worktrees/
 .agents/worktrees/
 .typert-*/
 .workbuddy/
+# local debugging leftovers
+_dsh-web.log
+_push.log

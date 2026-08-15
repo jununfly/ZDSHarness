@@ -1,0 +1,6 @@
+# 无效配置演示：targets 传字符串而不是数组 → ValidationError → fiber FAILED
+# 运行：cd docs/zj/config-service-demo/invalid && node --import tsx ../../../../vendor/cordis/bin.js
+- name: '../greeter-provider.ts'
+- name: '../consumer.ts'
+  config:
+    targets: 'not-an-array'

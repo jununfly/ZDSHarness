@@ -1,0 +1,4 @@
+- name: './greeter-provider.ts'
+- name: './consumer.ts'
+  config:
+    targets: ['alpha', 'beta']

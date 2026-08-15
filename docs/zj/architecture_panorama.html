@@ -30,12 +30,12 @@ footer { margin-top: 60px; color: #888; font-size: 13px; border-top: 1px solid #
 </head>
 <body>
 <div id="content">正在渲染…（需要网络加载 marked/mermaid）</div>
-<footer>数据源：architecture_panorama.md（勿手改本 HTML）· 生成于 2026-08-15 16:43</footer>
+<footer>数据源：architecture_panorama.md（勿手改本 HTML）· 生成于 2026-08-15 17:24</footer>
 <script id="source" type="text/markdown"># ZHarness 架构全景（C4 视角）
 
 > **数据源文件**：本 md 是唯一数据源，HTML 由 `gen_panorama_html.py` 从本文件生成，禁止手改 HTML。
 > **同步策略**：随学习路线图（`learning_roadmap.json`）进度逐层展开。每节标注解锁节点与状态。
-> 最后更新：2026-08-15（解锁至 1-2-3）
+> 最后更新：2026-08-15（解锁至 1-3）
 
 ## 进度索引
 
@@ -48,7 +48,8 @@ footer { margin-top: 60px; color: #888; font-size: 13px; border-top: 1px solid #
 | L3 | [组件：Turn/Step 事件流](#l3-组件turnstep-事件流) | 1-2-1 | ✅ 已展开 |
 | L3 | [组件：Profile/Bundle 组合](#l3-组件profilebundle-组合) | 1-2-1 | ✅ 已展开 |
 | L3 | [组件：插件形态与注册原语](#l3-组件插件形态与注册原语) | 1-2-3 | ✅ 已展开（demo 实证） |
-| L4 | [代码：关键接口](#l4-代码关键接口) | 1-3 / 1-4 | 🔒 待展开 |
+| L3 | [组件：插件运行时机制](#l3-组件插件运行时机制) | 1-3 | ✅ 已展开（7 课 + 3 demo 实证） |
+| L4 | [代码：关键接口](#l4-代码关键接口) | 1-4 | 🔒 待展开 |
 
 ---
 
@@ -402,10 +403,90 @@ flowchart LR
 
 ---
 
+## L3 组件：插件运行时机制
+
+> 解锁：1-3（cordis-tutorial 7 课 + `docs/zj/{events-effects,config-service,harness-tool}-demo/` 实证）
+
+### fiber 状态机：一个插件实例的一生
+
+```
+PENDING → LOADING → ACTIVE → UNLOADING → DISPOSED
+                 ↘ FAILED
+```
+
+```mermaid
+flowchart LR
+    PENDING -->|"依赖服务就绪（inject 全满足）"| LOADING
+    LOADING --> ACTIVE
+    ACTIVE -->|"配置修改 / 热重载 / 显式 dispose / 依赖服务消失"| UNLOADING
+    UNLOADING --> DISPOSED
+    LOADING -->|"apply 或配置校验抛异常"| FAILED
+    ACTIVE -->|"apply 或配置校验抛异常"| FAILED
+```
+
+- **PENDING 是合法状态**：已声明但依赖服务未就绪，静默等待、不报错。诊断法：`ctx.registry.values()` 枚举 fiber，`fiber.state === FiberState.PENDING` → 缺失服务（06 课）
+- **dispose 递归**：`fiber.dispose()` 等待全部清理（含异步 disposer）完成后结束，并递归卸载它挂载的所有子插件
+- `ctx.plugin()` 返回的 fiber 是 PromiseLike——`await` 它才能确保子插件加载完成（1-2-3 demo 踩过的坑）
+
+### effect：资源生命周期归 Cordis 管
+
+**三个时刻**（`Fiber.effect`，见 `vendor/cordis/src/fiber.ts`）：
+- **① 建立 = 调用即执行**：`ctx.effect(cb)` 被调用时 cb 同步执行（不是延迟注册）；fiber 已卸载则抛 `INACTIVE_EFFECT`——effect 只能挂在活的插件实例上
+- **② 运行 = disposer 入栈**：cb 的返回值（清理函数）被 fiber 收走，期间资源正常工作。返回值须为 disposer / `Promise<disposer>` / (async) generator（逐次 yield、逐个注册）
+- **③ 卸载 = 逆序清理**：`fiber.dispose()` 按 LIFO 运行全部 disposer，async 的会被 await；disposer 单次有效（重复调用 no-op）且可 await
+
+**一切皆 effect**：连 fiber 自身的发布/卸载都是父 fiber 上的一个 effect（`this.dispose = parent.fiber.effect(...)`）；`ctx.on` / `ctx.plugin` / 服务注册 / `ctx.tools.register(...)` 底层全是 effect（诊断树 label 可见）——插件组合 = effect 的组合，卸载 = 逆序回卷整棵清理树，从根上杜绝"注册了忘清理"。与 React `useEffect` 的区别：无依赖数组，一个 effect 只建立一次、撤销一次，生命周期跟随「插件启动 → 停止」。
+
+**外部资源**（计时器、连接、watcher）用 `ctx.effect(cb)` 包裹：主体加载时运行，返回的 disposer 卸载时运行；多个异步 disposer 并发运行（需有序拆除就放同一个 disposer 内依次 await）。
+卸载触发点：配置修改 / 热重载 / 显式 dispose / 依赖服务消失——四条路径统一回卷。
+
+### 事件分发 5 模式
+
+| 模式 | 调用 | 语义 | harness 用途 |
+|---|---|---|---|
+| emit | `ctx.emit(name, ...)` | 同步广播；不等、不收集返回值 | `tools/result` 等观察类事件 |
+| parallel | `await ctx.parallel(...)` | 所有监听器并发运行、一同等待（`Promise<void>`） | 并行 fan-out，不收集结果 |
+| serial | `await ctx.serial(...)` | 顺序等待；首个非 `null`/`false`/`undefined` 胜出并停止后续 | `agent/turn-stopping`（谁应答谁生效） |
+| bail | `ctx.bail(...)` | serial 的同步版本 | 同步决策（如审批策略） |
+| waterfall | `await ctx.waterfall(name, ...args, next)` | 环绕中间件：可转换 `next()` 结果，或不调 `next()` 直接返回（否决） | `agent/request`、`approval/request` 拦截/替换 |
+
+**实现核心**（`EventsService`，`vendor/cordis/src/events.ts`，五法全实现约 40 行）：
+- **判据统一**：`isBailed(v) = v !== null && v !== false && v !== undefined`——serial/bail 共用的「胜出」协议
+- `emit` 一行实现：`dispatch(...).map(cb => cb(...args))`——同步扇出，不碰返回值
+- `parallel` 复用 `dispatch('emit')` + `Promise.allSettled`：任一 reject → 抛 `AggregateError`（错误聚合成一个）
+- `serial` / `bail` 是同一个「顺序短路」循环，只差一个 `await`：首个 `isBailed` 即返回
+- `waterfall` 的 `next` 是闭包 `cbs.shift() ?? inner`：依次取监听器，取尽后落到调用方传入的内置行为；不调 `next()` = 否决整条链
+
+**waterfall 纪律（仓库常设规则）**：只负责观察或标注的监听器**必须调用 `next()`**；不调用直接返回 = 有意短路。日志监听器忘记调 `next()` 会悄无声息吞掉下游默认行为。
+
+### 服务与配置（Standard Schema）
+
+- **服务三件套**：`Service` 子类 + `super(ctx, 'name')`（运行时注册）+ `declare module '@deepseek-ai/cordis'` 声明合并（编译时类型）。消费方 `inject: ['name']`（硬性依赖，就绪前保持 PENDING）或 `ctx.get('name')`（可选依赖探测，未加载时返回 undefined）
+- **服务注册是 effect**：提供方卸载 → 服务消失 → 依赖方随之卸载 → 服务恢复后自动重载——"配置中替换 provider"的机制基础
+- **配置双身份**：同名导出 `interface Config`（TS 类型）与 `export const Config`（运行时 schema）。Cordis 只认 **Standard Schema V1** 接口（`Config['~standard'].validate`）；schemastery 是正式实现（本仓库 demo 手写最小版，证明它只是"一个普通接口"）
+- **验证发生在 apply 之前**（`Fiber._resolveConfig`）：失败 → `ValidationError` → fiber FAILED → **插件绝不启动**；成功 → 默认值补齐、归一化后才传给 `apply(ctx, config)`
+- `!!js` 标签：仅在 `config` 与条目 `disabled` 字段内有效，loader 加载时求值（可环境/平台门控）；其余元数据保持静态
+
+### 组合与 HMR
+
+- **条目元数据**：`id`（稳定标识，loader 区分"修改现有条目"与"删除+重建"）、`disabled: true`（保留条目不挂载，改回原值插件连同依赖它的 PENDING 插件一起重载）
+- **组嵌套**：子列表作为一个单元加载/卸载；`isolate`：为组提供某服务名的独立实例——两个组可各自看到配置不同的 provider，互不影响
+- **HMR**：`cordis-plugin-hmr` 监视文件，保存 → 卸载旧实例（effect 全部回卷）→ 加载新代码 → `apply` 重跑。编辑 `cordis.yml` 本身也触发：按 `id` 比较条目，只动变化部分
+- **无 `id` 的条目**：每次读取生成新 id，任何编辑都被视为删除+重建（整条重挂载）
+
+### 07 桥：tools 服务 = 第一个真实扩展
+
+- `ctx.tools.register(defineTool({ name, description, parameters, output: { schema, render }, execute }))`——`parameters` 规约 → 模型可见 JSON Schema，`execute` 前校验模型参数；`output.render` 生成可持久化结果
+- 组合依赖：`dsh-tools` 注入 `systemPrompt` 服务 → 组合必须列出 `dsh-system-prompt`，否则工具插件永久 PENDING
+- `tools/result` 事件在结果物化时发出（`execute` 的 promise 兑现前）——观察者先于调用方看到结果
+- **Capability seam 实证**：模型只面对 `tools` 服务；把 provider 换成远程沙箱实现，整个工具执行世界跟着换，消费方零改动
+
+---
+
 ## L4 代码：关键接口
 
-> 🔒 待 1-3（Cordis 心智模型）与 1-4（按包精读）解锁。届时补充：
-> - `ctx.effect()` / `ctx.on()` 注册语义与 unwind
+> 🔒 待 1-4（按包精读）解锁。届时补充：
+> - `ctx.on()` 注册语义与 unwind（effect 本体见 L3「插件运行时机制」）
 > - declaration merging 事件表（`SessionEventMap` / `AgentEvents`）
 > - `Agent` 接口签名与 agent handle 取消语义
 > - 典型能力包的三件套代码位置（以 fs 或 skill 为例）

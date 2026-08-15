@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `learning_roadmap.json` | 最后更新: 2026-08-15 16:22:26
+> 数据文件: `learning_roadmap.json` | 最后更新: 2026-08-15 17:02:18
 
 [~][X+] 1. ZHarness 学习计划
 ├── [x][Y+] 1-1. 跑通开发环境
@@ -12,10 +12,10 @@
 │   ├── [x][Y+] 1-2-1. 读 docs/architecture.md
 │   ├── [x][Y+] 1-2-2. 读 README 与仓库布局
 │   └── [x][Y+] 1-2-3. 理解一切皆插件哲学
-├── [ ][Y+] 1-3. 建立 Cordis 心智模型
-│   ├── [ ][Y+] 1-3-1. 完成 cordis-tutorial 7 课
-│   ├── [ ][Y+] 1-3-2. 掌握 effects 与事件模型
-│   └── [ ][Y+] 1-3-3. 理解服务与配置机制
+├── [x][Y+] 1-3. 建立 Cordis 心智模型
+│   ├── [x][Y+] 1-3-1. 完成 cordis-tutorial 7 课
+│   ├── [x][Y+] 1-3-2. 掌握 effects 与事件模型
+│   └── [x][Y+] 1-3-3. 理解服务与配置机制
 ├── [ ][Y+] 1-4. 按包精读核心代码
 │   ├── [ ][Y+] 1-4-1. 精读 packages/core 产品 API
 │   ├── [ ][Y+] 1-4-2. 精读一个能力包 (fs/skill/llm)
