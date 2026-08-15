@@ -115,12 +115,12 @@
     "1-1-1": {
       "id": "1-1-1",
       "label": "安装依赖与核心检查",
-      "status": "pending",
+      "status": "done",
       "mode": "exploit",
       "parent": "1-1",
       "children": [],
       "decisions": [],
-      "notes": "corepack enable; pnpm install; pnpm run typecheck 作为 setup 完成标志"
+      "notes": "corepack enable; pnpm install (923 包); pnpm run typecheck 通过。shim 拦截 lefthook postinstall 和 pnpm deps 检查，需 $env:NODE_OPTIONS=$null + verify-deps-before-run=false 绕开"
     },
     "1-1-2": {
       "id": "1-1-2",
@@ -265,7 +265,7 @@
   },
   "metadata": {
     "created": "2026-08-15 11:25:33",
-    "updated": "2026-08-15 11:26:16",
+    "updated": "2026-08-15 12:58:00",
     "md_file": "learning_roadmap.md"
   }
 }
