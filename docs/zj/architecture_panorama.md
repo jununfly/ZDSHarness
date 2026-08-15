@@ -2,7 +2,7 @@
 
 > **数据源文件**：本 md 是唯一数据源，HTML 由 `gen_panorama_html.py` 从本文件生成，禁止手改 HTML。
 > **同步策略**：随学习路线图（`learning_roadmap.json`）进度逐层展开。每节标注解锁节点与状态。
-> 最后更新：2026-08-15（解锁至 1-3）
+> 最后更新：2026-08-16（L5 四族深潜）
 
 ## 进度索引
 
@@ -17,6 +17,10 @@
 | L3 | [组件：插件形态与注册原语](#l3-组件插件形态与注册原语) | 1-2-3 | ✅ 已展开（demo 实证） |
 | L3 | [组件：插件运行时机制](#l3-组件插件运行时机制) | 1-3 | ✅ 已展开（7 课 + 3 demo 实证） |
 | L4 | [代码：关键接口](#l4-代码关键接口) | 1-4 | ✅ 已展开（6 主轴 + 2 略读 + 契约验证） |
+| L5 | [深潜：session 族](#l5-深潜session-族) | 2026-08-16 | ✅ 已展开（C1→C4 + 动态图） |
+| L5 | [深潜：agent 族](#l5-深潜agent-族) | 2026-08-16 | ✅ 已展开（C1→C4 + 动态图） |
+| L5 | [深潜：tools 族](#l5-深潜tools-族) | 2026-08-16 | ✅ 已展开（C1→C4 + 动态图） |
+| L5 | [深潜：fs 族](#l5-深潜fs-族) | 2026-08-16 | ✅ 已展开（C1→C4 + 动态图） |
 
 ---
 
@@ -489,6 +493,414 @@ packages/fs/tool-fs/     工具层：read/write/edit/read_image 注册 + systemP
 
 - **0 契约失败**：session 77/77、surface 57/57、tools 136/136、code-mode 89/89、loop 54/54、tool-calls 21/21、tool-fs 73/73、integration 33/33、fs-local 129/140（11 失败 = Windows 沙箱 symlink/嵌套 code runtime 环境限制）
 - 关键语义获测试名背书：stale version 检查**先于** literal 匹配；目标删除报 `FS_STALE_VERSION`（版本语义非 not-found）；并发守卫一赢一 stale；成功写刷新观察版本；二进制旧文件 `before:null` 仍可覆盖；tool/result replace 只能改 content；空 content assistant/message derive 为 null 被跳过；surface 事件缺 marker 在 runtime 拒绝
+
+---
+
+## L5 深潜：四大 package 族的 C4 透镜
+
+> 与 L1–L4 的**横向层级切面**互补，L5 按**族纵切**：每族走一遍 C1（族在系统中的上下文）→ C2（族内容器/模块边界）→ C3（组件协作 + 动态行为）→ C4（核心类型与接口）。全部结论有 1-4 精读源码证据 + 693 契约测试背书（见 `notes/`）。
+
+### 四族互位（先看全局）
+
+```mermaid
+flowchart TB
+    subgraph families["四大 package 族"]
+        direction TB
+        SESS["session 族<br/>事件溯源真相源<br/>core/session · 3156 行"]
+        AG["agent 族<br/>句柄 + 驱动<br/>core/agent{,-loop,-default-model,-tool-presentation} · 3520 行"]
+        TOOL["tools 族<br/>模型可见能力的执行<br/>core/tools · 5620 行"]
+        FS["fs 族<br/>观察-守卫的文件能力<br/>fs/* 七包 · 5746 行"]
+    end
+
+    loopdrv["agent-loop: ReactLoopAgent<br/>turn/step 状态机"]
+    AG --> loopdrv
+    loopdrv -->|"append 事件"| SESS
+    loopdrv -->|"deriveMessages → 模型请求"| SESS
+    loopdrv -->|"executeToolCalls 调度"| TOOL
+    loopdrv -->|"agent/pre-step → assemble"| SP["system-prompt（支撑包）"]
+    loopdrv -->|"scope 过滤分发"| SCOPE["scope（支撑包）"]
+    TOOL -->|"read/write/edit 工具体"| FS
+    FS -->|"fs/observed 观察"| SESS
+
+    UI["UI / CLI / ACP 客户端<br/>只面向 Agent 句柄 + Session 投影"]
+    UI --> AG
+    UI --> SESS
+```
+
+四条咬合线：① agent-loop 把每个 step 的事件 append 进 session（日志是唯一真相）；② loop 从 session 的 surface 派生取回模型可见消息（回放 = 重放日志）；③ loop 通过 tools 的 staged scheduler 接口调度工具；④ fs 工具的观察-守卫闭环把文件状态变化记进 session 事件流。
+
+---
+
+### L5 深潜：session 族
+
+**包路径** `packages/core/session/`（10 模块 3156 行）｜笔记 `notes/core/session.md`
+
+#### C1 族上下文——「append-only 事件日志是唯一真相」
+
+session 族对上暴露两样东西：**活会话 `Session`**（事件词汇 + 派生投影）与 **会话库 `SessionStore`**（create/resume/fork/flush 生命周期）。所有消费者（loop、UI、工具呈现）都不持有独立状态——需要什么就从日志 fold 出什么。
+
+```mermaid
+flowchart TB
+    LOOP["agent-loop<br/>每个 step append 事件"]
+    UI["UI / CLI<br/>回放 = 重放日志"]
+    TOOLFS["tool-fs 呈现层<br/>replay-safe meta"]
+
+    subgraph sess["session 族"]
+        LOG["append-only event log<br/>seq = log.length 连续契约"]
+        DRV["派生投影<br/>messages / requestHeader / requestContext"]
+    end
+
+    PERSIST["持久化存储<br/>（store flush 唯一入口）"]
+
+    LOOP -->|"唯一写入者路径"| LOG
+    LOG --> DRV
+    DRV -->|"deriveMessages 模型可见面"| LOOP
+    DRV --> UI
+    DRV --> TOOLFS
+    LOG --> PERSIST
+```
+
+#### C2 容器——模块即容器
+
+```mermaid
+flowchart TB
+    subgraph core["core/session 模块边界"]
+        direction TB
+        INDEX["index.ts · 1157<br/>Session 服务 + SessionStore<br/>append / events / fork"]
+        SURFACE["surface.ts · 460<br/>SurfaceManager 增量 fold<br/>deriveEventMessage 唯一投影规则"]
+        TYPES["types.ts · 436<br/>SessionEventMap 事件词汇<br/>13 类事件 + Message"]
+        CHUNK["chunk-rows.ts · 346<br/>行窗口 chunk<br/>read 工具呈现共享原语"]
+        JSONB["json.ts · 190<br/>lossless-JSON 边界<br/>拒绝 cyclic/sparse/-0/NaN"]
+        RH["request-header.ts · 71<br/>请求头增量 fold"]
+        REPAIR["repair.ts · 133<br/>日志修复"]
+        INV["invariant.ts · 250<br/>+ known-event-types.ts · 64"]
+    end
+
+    INDEX --> SURFACE
+    INDEX --> JSONB
+    INDEX --> RH
+    INDEX --> REPAIR
+    SURFACE --> TYPES
+    INDEX --> CHUNK
+```
+
+#### C3 组件协作——append 两阶段（先验证后提交）
+
+```mermaid
+sequenceDiagram
+    participant C as 调用方 (loop)
+    participant A as Session.append
+    participant J as json.ts
+    participant S as SurfaceManager
+    participant L as listeners
+
+    C->>A: append(entry)
+    A->>J: snapshotJsonValue(payload)
+    Note over J: 一次遍历：验证可序列化 + 脱拷贝<br/>拒绝 cyclic/sparse/-0/NaN/exotic
+    J-->>A: 冻结快照
+    A->>S: validateNext(entry)
+    Note over S: 提交前验证 surface 契约<br/>存 _pendingPlan（先验证后提交）
+    A->>A: log.push → seq = log.length<br/>events 快照失效
+    A->>S: _processDelta（应用 pendingPlan）
+    loop 逐 listener（contained：一个抛错不饿死后继）
+        A->>L: session/event
+    end
+    Note over A: entry.appending 防重入<br/>事件 deepFreeze
+```
+
+surface 派生规则（`deriveEventMessage` 只认三种 message-producing 事件）：
+
+- `user/message` / `assistant/message` → 直接投影（空 content assistant/message derive 为 null，被跳过）
+- `tool/result` → 按 sourceEventSeqs 回指 `tool/call`
+- **replace 语义**：提升 `replaceGeneration` 驱动 deriveMessages 缓存重建；`tool/result` replace 只能改 content（`assertToolResultRewrite`）
+
+#### C4 代码——store 生命周期状态机
+
+```mermaid
+stateDiagram-v2
+    [*] --> prepare: create() 单个 effect
+    prepare --> enter: 构造完成
+    enter --> announcing: enter（重复 id 权威碰撞边界）
+    announcing --> active: announce（listener 失败 → veto + rollback）
+    active --> detaching: detach / dispose
+    detaching --> active: announcing/appending 期间<br/>latch detachRequested 等 unwind
+    detaching --> disposed
+    active --> forked: fork(boundary)<br/>边界须连续、不能落在 open turn
+    disposed --> [*]
+
+    note right of active
+        flush 是持久化唯一入口
+        (one owner one spelling)
+    end note
+```
+
+核心不变量：`seq` 连续（回放可比对）；`session/event` 在 commit 点**之后**发布；`session/created` 逐 listener contained（创建期抛错触发 rollback）；`session/flush` parallel。
+
+---
+
+### L5 深潜：agent 族
+
+**包路径** `agent` + `agent-loop` + `agent-default-model` + `agent-tool-presentation`（4 包 3520 行）｜笔记 `notes/core/agent.md` + `agent-loop.md`
+
+#### C1 族上下文——「接口与实现分离：句柄面向 UI，loop 可替换」
+
+agent 包定义 `Agent` 句柄与注册表（零循环依赖），agent-loop 是**全仓库唯一**实现 `AgentFactory` 的包（turn/step 状态机驱动）；两个小组合行补充默认模型选择与工具呈现。
+
+```mermaid
+flowchart TB
+    subgraph agfam["agent 族"]
+        direction TB
+        subgraph face["接口平面 · core/agent 1636 行"]
+            REG["ctx.agents 注册表<br/>register/enter/announce 三分"]
+            HANDLE["Agent 句柄<br/>cancel/send/followup/steer/inject"]
+            EVT["agent/* 事件词汇<br/>3 waterfall + 1 serial 扩展点"]
+        end
+        subgraph impl["实现平面"]
+            LOOP2["agent-loop 1643 行<br/>ReactLoopAgent + AgentLoop 服务<br/>（唯一具体 loop）"]
+            ADM["agent-default-model 137 行<br/>默认模型选择（settings live 读）"]
+            ATP["agent-tool-presentation 104 行<br/>preset 声明工具呈现"]
+        end
+    end
+
+    UI2["UI / hooks / 编排器<br/>只面向 Agent 句柄编程"]
+    UI2 --> HANDLE
+    REG -.->|"工厂委托 + 调用者追溯"| LOOP2
+    LOOP2 -->|"implements AgentFactory"| REG
+```
+
+#### C2 容器——四包职责
+
+| 包 | 行数 | 职责 |
+|---|---|---|
+| `core/agent` | 1636 | Agent 接口 / 注册表 / initiator 因果链（AsyncLocalStorage）/ `agent/*` 事件 |
+| `core/agent-loop` | 1643 | AgentFactory 实现 / Phase 状态机 / turn-step 驱动 / 工具调度 / runtime-context 投影 |
+| `core/agent-default-model` | 137 | 默认模型 settings 读写（`onChange:()=>{}` live 读取） |
+| `core/agent-tool-presentation` | 104 | preset 声明工具呈现模式（native 直 presentAs，非 native 等 codeRuntime） |
+
+#### C3 组件协作——Phase 状态机与 turn 边界
+
+```mermaid
+stateDiagram-v2
+    [*] --> idle
+    idle --> running: wakeDriver<br/>新 AbortController + initiator 包裹
+    running --> idle: kick finally<br/>(wakeRequested && hasPending → 再 wake)
+    idle --> maintenance: runMaintenance（true-idle 阶段）
+    maintenance --> idle: 任务完成 / cancel 中止
+    running --> disposed: disposed-cause cancel + quiescence
+
+    note right of running
+        maintenance/aborted 期间
+        latch wakeRequested 等收敛重放
+    end note
+```
+
+```mermaid
+sequenceDiagram
+    participant D as driver (kick)
+    participant T as turn()
+    participant S as step()
+    participant L as llm
+    participant TC as executeToolCalls
+
+    loop while (await turn())
+        D->>T: 新 turn（有 pending 才开）
+        T->>T: preStep: claim inbox + assemble prompt + runtimeContext.project
+        T->>T: 'agent/pre-step' waterfall（可否决/换消息）
+        loop turnEnds 为假
+            T->>S: step(assembly)
+            S->>L: buildRequest → stream
+            Note over S: 'agent/request' waterfall 换配置（不能改消息）<br/>失败走 'agent/request-error'（retry 拥有恢复）
+            S->>T: assistant/message 追加（sourceEventSeqs）
+            S->>TC: tool-calls → exclusive barrier / parallel 滚动池
+            Note over TC: 结果按 model order 提交（commitReady 连续槽位推进）<br/>concludesTurn 工具结果决定 turn 结局
+        end
+        T->>T: 'agent/turn-stopping' serial（可 steer() 续命）
+        T->>T: finally 永远 append turn/end（turnEnds: completed/max-tokens/blocked/aborted/error）
+    end
+```
+
+**数据说了算**：turn 是否关闭由数据决定（`concludesTurn` 工具结果、fresh steering），不是监听器顺序。max-tokens **sticky**：任何 step 触顶后，后续正常完成的 step 不得降级 turn 结局。
+
+#### C4 代码——句柄方法与事件模式
+
+| 句柄方法 | 语义 |
+|---|---|
+| `cancel(cause, {keepInbox?})` | 清队/放弃活跃 turn；首个 cause 胜出 |
+| `send / followup` | inbox 边界投递（next-turn / next-step）+ 唤醒 |
+| `steer(message)` | 提交到最近 step 的 steering（下个 step 边界消费） |
+| `inject(message)` | 给下个 pre-step 塞模型上下文，不唤醒 |
+| `whenIdle() / runMaintenance(task)` | 静默等待 / true-idle 阶段维护任务 |
+
+事件三模式：`agent/pre-step`、`agent/request`、`agent/request-error` 是 **waterfall**（可否决/替换/拥有恢复）；`agent/turn-stopping` 是 **serial**（最后拦截）；其余（created/disposed/status/inbox/*、session-start、error）是 **emit**。prepare 期三路 abort 融合（caller signal / fiber unload / factory teardown），publish 序 `sessions.enter → agents.enter → announce ×2`，每个边界后 `assertLive()`。
+
+---
+
+### L5 深潜：tools 族
+
+**包路径** `packages/core/tools/`（9 模块 5620 行）｜笔记 `notes/core/tools.md`
+
+#### C1 族上下文——「模型可见能力的注册表 + 执行管线」
+
+tools 族是 capability seam 的枢纽：模型只面对 `tools` 服务；把执行换成远程沙箱实现，整个工具执行世界跟着换，消费方零改动。
+
+```mermaid
+flowchart TB
+    MODEL["模型 tool-calls"]
+    LOOP3["agent-loop 调度器<br/>（consume staged 接口）"]
+    PLUGINS["能力插件<br/>tool-fs / tool-shell / ..."]
+
+    subgraph toolfam["tools 族"]
+        RT["ToolRuntime extends Service<br/>注册表 + ToolLayer"]
+        PIPE["执行管线五阶段<br/>prepare → dispatch → finalize → finish"]
+        CODEM["code-mode<br/>run_code 桥（嵌套子调度）"]
+        SCHEMA["schema 层<br/>规约 → 模型可见 JSON Schema"]
+    end
+
+    MODEL -->|"参数"| PIPE
+    LOOP3 --> RT
+    PLUGINS -->|"defineTool 注册"| RT
+    RT --> PIPE
+    PIPE --> CODEM
+    SCHEMA -->|"parameters 白名单投影"| MODEL
+```
+
+#### C2 容器——模块边界
+
+```mermaid
+flowchart TB
+    subgraph tsrc["core/tools 模块边界"]
+        direction TB
+        TIDX["index.ts · 1946<br/>ToolRuntime / 五阶段 execute<br/>view() 可见性 / resolveExecution"]
+        TCM["code-mode.ts · 673<br/>run_code 桥<br/>run-scoped AbortController"]
+        TSCHEMA["schema.ts · 617 + json-schema.ts · 656<br/>规约与 JSON Schema 互转"]
+        TTYPE["ts-types.ts · 293 + py-types.ts · 818<br/>TS/Python 类型 ↔ 规约"]
+        TPRES["presentation.ts · 389<br/>呈现模式 / 白名单投影"]
+        TTYPES["types.ts · 58<br/>tool/code-dispatch-start<br/>tool/code-dispatch 事件扩展"]
+    end
+    TIDX --> TCM
+    TIDX --> TSCHEMA
+    TSCHEMA --> TTYPE
+    TIDX --> TPRES
+```
+
+#### C3 组件协作——五阶段管线与取消二分
+
+```mermaid
+flowchart LR
+    subgraph P1["① prepare"]
+        MA["materialize args"] --> W1["tools/pre-execute<br/>(waterfall)"] --> AP["approval ask"] --> GU["guard"] --> RC["caller cancel 复查"]
+    end
+    subgraph D1["② dispatch"]
+        W2["tools/execute<br/>(waterfall)"] --> BODY["工具体执行<br/>fuseToolSignals 融合信号"]
+    end
+    subgraph F1["③ finalize"]
+        W3["tools/post-execute<br/>(waterfall)"]
+    end
+    subgraph FF["④ finish"]
+        MAT["materialize → finalizeContent<br/>→ materialize → notifyResult"]
+    end
+    P1 --> D1 --> F1 --> FF
+```
+
+取消语义二分（从不 abandon body promise）：
+
+- `ABORTED`：工具体已启动（`bodyInvoked` 标记），让 body 自己收到信号后收敛
+- `ABORTED_BEFORE_DISPATCH`：未启动，直接合成取消结果
+
+`canonicalResults` WeakMap 把 wrapper-authored 结果拉回规范；`tools/result` 在结果物化时 emit（观察者先于调用方看到结果）；`tools/change` **故意不 scope-filtered**（注册表全局变更广播）。
+
+可见性解析 `view()`（scope chain 继承）：**nearer 覆盖 farther** → restrictions 只过滤继承面、不碰 own layer（child 的 reporting 工具不能被能力过滤剥掉）→ code transport 最后追加（可过滤层外）。`collapses()` 在策略管线**之前**确定性拒绝（`!nested && modeFor(scope)==='code' && name!==RUN_CODE_NAME`），`resolveExecution` 与 `createExecution` 共享同一谓词防 drift。
+
+#### C4 代码——核心契约
+
+| 契约 | 内容 |
+|---|---|
+| `Tool` | `name/description/parameters + output{schema,render} + execute`；`parameters` 规约 → 模型可见 JSON Schema，execute 前校验模型参数 |
+| `ToolLayer` | `tools / restrictions / guards / mode`（scope 化分层） |
+| `[TOOL_RUNTIME_SCHEDULER]` | symbol staged 接口——loop 的 exclusive/parallel 调度消费面 |
+| 事件词汇 | `tools/pre-execute`、`tools/execute`、`tools/post-execute`（waterfall）+ `tools/code-dispatch-log`（waterfall contained）+ `tools/result`（emit contained）+ `tools/change`（不 scope-filtered） |
+| 呈现白名单 | `schemas()` 只投影 `name/description/parameters` 三字段 |
+
+---
+
+### L5 深潜：fs 族
+
+**包路径** `packages/fs/*`（7 包 5746 行）｜笔记 `notes/capabilities/fs.md`
+
+#### C1 族上下文——「观察-守卫闭环的文件能力」
+
+fs 族把「模型改文件」从盲写变成受守卫的事务：**读 = 观察（记版本），写 = 声明意图 + 版本守卫 + 原子替换**。所有观察与意图都进 session 事件流，可回放审计。
+
+```mermaid
+flowchart TB
+    MODEL2["模型 read/write/edit 工具调用"]
+
+    subgraph fsfam["fs 族（7 包）"]
+        direction TB
+        subgraph contract["契约层"]
+            F1["fs · 503<br/>FileSystem 抽象 + branded 身份 + 13 错误码"]
+        end
+        subgraph impl2["实现层"]
+            F2["fs-local · 1210<br/>withLock FIFO + staging 原子替换"]
+        end
+        subgraph policy["策略层"]
+            F3["fs-observation-policy · 189<br/>fs-sandbox · 254（升级授权）"]
+        end
+        subgraph tools2["工具层"]
+            F4["tool-fs · 1463<br/>read/write/edit/read_image + 沙箱升级<br/>tool-fs-search · 1574<br/>tool-str-replace-editor · 553"]
+        end
+    end
+
+    HOSTFS["本地宿主 FS"]
+
+    MODEL2 --> tools2
+    tools2 --> contract
+    contract --> impl2
+    policy --> impl2
+    impl2 --> HOSTFS
+```
+
+#### C2 容器——三层靠三根线咬合
+
+1. **intent/guard 单槽**（`fs/write-intent` / `fs/edit-intent` waterfall，默认 undefined = 无条件放行）
+2. **`fs/observed` 事件**（观察即记账，present/absent 两态 + version）
+3. **replay-safe 呈现 meta**（tool/result meta 是 opaque JSON，`presentResult` 从持久化 meta 恢复 diff/行窗口）
+
+#### C3 组件协作——读→写闭环时序
+
+```mermaid
+sequenceDiagram
+    participant M as 模型
+    participant R as read 工具
+    participant FSL as fs-local
+    participant W as write/edit 工具
+    participant S2 as session 事件流
+
+    M->>R: read(path)
+    R->>FSL: 一次 stat（absence 观察或 type+size 路由）
+    R->>FSL: size ≥ 10MiB → streamText（前 8192 字节 NUL 采样）
+    R->>S2: emit fs/observed {kind:present, version}
+    Note over R,S2: READ_LIMIT=2000 行窗口<br/>buildWindow + replay-safe meta
+    M->>W: edit(path, ...)
+    W->>S2: fs/edit-intent waterfall（单槽守卫）
+    W->>FSL: version 不匹配/不存在 → FS_STALE_VERSION（stale 检查先于 literal 匹配）
+    FSL->>FSL: withLock 每-targetKey FIFO（read→guard→write 窗口串行化）
+    FSL->>FSL: 同目录 staging 文件 → 原子替换（0o600/Windows DACL 拷贝）
+    W->>S2: tool/result + 观察版本刷新
+```
+
+关键实现细节：`resolve` 走 **realpath**——派生身份使别名（symlink/大小写变体）共享 stale guards；`readWholeBytes` 双保险 maxBytes（stat 预检 + 流式累积超限即断）；`diffBasisMaxBytes` 默认 10 MiB；沙箱升级（`FsSandboxController`）与 bash 同构；read_image gate 顺序（gate 先于任何 IO）。
+
+#### C4 代码——branded 身份与错误语义
+
+| 契约 | 内容 |
+|---|---|
+| `FsTargetKey` / `FsVersion` | opaque branded 类型——消费者**禁用解析**，只能来自 resolve/stat |
+| 13 个 `FsErrorCode` | 核心三个：`FS_STALE_VERSION`（版本语义非 not-found，目标删除也报它）、`FS_NOT_OBSERVED`（createIfAbsent 撞已有）、`FS_NOT_TEXT`（NUL 采样二进制拒绝） |
+| `FileSystem` 抽象 | resolve/stat/readText/streamText/writeText/editText/listDir **全 abstract**（实现可整体替换：本地/E2B/远程） |
+| 写入原子性 | staging 文件同目录写入 → rename 替换；POSIX 0o700/0o600，Windows 拷贝父目录 DACL |
+
+契约测试背书（fs-local 129 + tool-fs 73 + integration 33）：并发守卫一赢一 stale；成功编辑刷新 version；二进制旧文件 `before:null` 仍可覆盖；read→write→edit→再读链路闭环。
 
 ---
 
