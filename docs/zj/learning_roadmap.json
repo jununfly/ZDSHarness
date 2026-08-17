@@ -6,7 +6,7 @@
     "1": {
       "id": "1",
       "label": "ZHarness 学习计划",
-      "status": "completed",
+      "status": "in_progress",
       "mode": "explore",
       "parent": null,
       "children": [
@@ -14,7 +14,8 @@
         "1-2",
         "1-3",
         "1-4",
-        "1-5"
+        "1-5",
+        "1-6"
       ],
       "decisions": [
         {
@@ -326,11 +327,103 @@
         }
       ],
       "notes": "docs/zj/upstream-compare.md：squash 导入无共享历史→shallow fetch 快照对比。结论：upstream HEAD(08-13) 早于导入(08-15)，零落后；packages 源码零漂移；fork 改动=声明+docs/zj(+3570)。fetch 逢症状 E（ref 被吞）已手写恢复；https 代理失效改 SSH"
+    },
+    "1-6": {
+      "id": "1-6",
+      "label": "ZHarness 使用期：从学习转入构建",
+      "status": "in_progress",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-6-1",
+        "1-6-2",
+        "1-6-3"
+      ],
+      "decisions": [
+        {
+          "q": "学习期定位",
+          "answer": "手段——学以致用，学习期关门",
+          "note": "21/21 节点+693 契约测试+6 demo，心智模型足够施工；继续读码边际收益低于动手"
+        },
+        {
+          "q": "下一步主方向",
+          "answer": "补完遗留先行：真实 LLM e2e 是使用期门票",
+          "note": "demo 全是代码驱动管线，真实 loop 从未跑过；转教与 upstream 跟踪暂不做"
+        },
+        {
+          "q": "路线图载体",
+          "answer": "同棵树加 1-6 使用期",
+          "note": "学习→使用同工程两阶段，决策历史连续，deferred 决策可直接引用"
+        },
+        {
+          "q": "遗留项处置",
+          "answer": "显式建节点 1-6-2 跟踪",
+          "note": "deferred 不落节点=隐性漂移；要么做掉要么显式 decide 关闭"
+        }
+      ],
+      "notes": ""
+    },
+    "1-6-1": {
+      "id": "1-6-1",
+      "label": "真实 LLM 端到端验证：DEEPSEEK_API_KEY 跑通完整 agent loop",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [
+        {
+          "q": "key 来源与位置",
+          "answer": "用户提供，写入仓库根 .env（gitignored）；仓库 app-boot/vitest 只读根 .env 不读 ~/.env",
+          "note": "已从 ~/.env 复制到 repo root .env"
+        },
+        {
+          "q": "e2e 验收形态",
+          "answer": "dsh --profile headless 为主验收 + llm-deepseek adapter 一个 e2e 文件为辅",
+          "note": "Q7 同意推荐"
+        },
+        {
+          "q": "跑通的验收标准",
+          "answer": "headless 任务成功结束且 session 含 (1) 真实模型回复 (2) ≥1 次工具调用与结果回传",
+          "note": "任务：统计本仓库 README 词数并报告——能逼出工具调用；产出=session 文件路径+decide 关闭证据"
+        },
+        {
+          "q": "关闭证据",
+          "answer": "辅验收 adapter.e2e 6/6（含 2 个 tool-call round trip + reasoning 回传）；主验收 dsh headless 任务成功结束，session 含 5 次 tool/call+result 回传（glob/bash/read/bash/bash）+ 6 条 assistant message + turn 完整闭环",
+          "note": "session ~/.dsh/sessions/.../session-5b88db26.../session.jsonl.zstd；障碍已排除：stale lefthook lock、pnpm shim、首次 lib/ 构建"
+        }
+      ],
+      "notes": ""
+    },
+    "1-6-2": {
+      "id": "1-6-2",
+      "label": "llm 能力包按需精读：遇到 llm 行为问题时带出",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-6-3": {
+      "id": "1-6-3",
+      "label": "第一个实际项目立项：e2e 跑通后定，候选 ZBrain chat",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [
+        {
+          "q": "第一个项目何时定",
+          "answer": "e2e 跑通后定，若 ZBrain 意向明确则 e2e 验证点向它倾斜",
+          "note": "避免过早收敛；grilling Round1 Q3"
+        }
+      ],
+      "notes": ""
     }
   },
   "metadata": {
     "created": "2026-08-15 11:25:33",
-    "updated": "2026-08-16 01:37:59",
-    "md_file": "D:\\workspace\\github\\jununfly\\ZHarness\\docs\\zj\\learning_roadmap.md"
+    "updated": "2026-08-17 14:17:51",
+    "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZHarness/docs/zj/learning_roadmap.md"
   }
 }
