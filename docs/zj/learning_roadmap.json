@@ -6,7 +6,7 @@
     "1": {
       "id": "1",
       "label": "ZHarness 学习计划",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": null,
       "children": [
@@ -331,7 +331,7 @@
     "1-6": {
       "id": "1-6",
       "label": "ZHarness 使用期：从学习转入构建",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -397,12 +397,33 @@
     "1-6-2": {
       "id": "1-6-2",
       "label": "llm 能力包按需精读：遇到 llm 行为问题时带出",
-      "status": "pending",
-      "mode": "explore",
+      "status": "completed",
+      "mode": "exploit",
       "parent": "1-6",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "llm 能力包按需精读如何验收？",
+          "answer": "以技术调研真实故障链为边界，验证 maxTokens/reasoning 配置解析、agent/request-error 模型请求恢复、应用级工具错误终止三条机制",
+          "note": "避免无目标通读；已发生的 8192 输出截断与 GitHub rate-limit 重试风暴提供运行证据。"
+        },
+        {
+          "q": "模型输出预算由哪一层拥有？",
+          "answer": "部署组合显式配置 maxTokens；dsh-llm 解析并冻结有效调用配置且不做 clamp，DeepSeek adapter 将其映射为 wire max_tokens",
+          "note": "技术调研组合固定 32768，keyless 组装测试已验证实际请求值。"
+        },
+        {
+          "q": "模型请求失败与工具执行失败是否共享重试机制？",
+          "answer": "不共享：终态模型请求失败进入 agent/request-error，由 provider retryPolicy 与 dsh-llm-retry 决策；工具错误留在 tools 生命周期，由应用策略决定终止或后续 turn 重试",
+          "note": "GitHub GITHUB_RATE_LIMITED 在 tools/post-execute 取消当前 turn，避免模型通过改参绕过重复调用提醒。"
+        },
+        {
+          "q": "reasoning 消耗导致 Report IR 截断时如何处理？",
+          "answer": "同时压缩模型输入、要求直接提交结构化工具参数并显式提高有界输出预算；不在 LLM core 中猜测或拆分 reasoning 配额",
+          "note": "真实运行在 8192 输出上限时 reasoningTokens=7803 且未发出 prepare；bounded digest 后将组合上限设为 32768。"
+        }
+      ],
+      "notes": "按真实技术调研故障链完成 llm、llm-deepseek、agent-loop request recovery、llm-retry 与 research application policy 的定向精读。确认配置解析、wire 序列化、模型请求恢复和工具错误终止的职责分层；6 个聚焦测试文件共 222 个用例通过。"
     },
     "1-6-3": {
       "id": "1-6-3",
@@ -1087,7 +1108,7 @@
   },
   "metadata": {
     "created": "2026-08-15 11:25:33",
-    "updated": "2026-08-18 21:24:48",
+    "updated": "2026-08-18 23:28:34",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZHarness/docs/zj/learning_roadmap.md"
   }
 }
