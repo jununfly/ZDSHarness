@@ -102,6 +102,7 @@
     "@deepseek-ai/dsh-tool-research-report": "workspace:*",
     "@deepseek-ai/dsh-tool-research": "workspace:*",
     "@deepseek-ai/dsh-research-telemetry-otel": "workspace:*",
+    "@deepseek-ai/dsh-research-eval": "workspace:*",
     "@deepseek-ai/dsh-tool-session-query": "workspace:*",
     "@deepseek-ai/dsh-tool-skill": "workspace:*",
     "@deepseek-ai/dsh-tool-str-replace-editor": "workspace:*",

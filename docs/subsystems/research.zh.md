@@ -2,7 +2,7 @@
 
 [English](research.md) | 中文
 
-技术调研子系统把规范化 brief 编译为固定 GitHub commit 的证据，以 sealed ledger 校验语义化报告，并从持久 session event 投影发布健康状态。[`dsh-research`](../../packages/research/research) 负责共享 compiler 约定，[`dsh-tool-research`](../../packages/research/tool-research) 向 agent 暴露有界采集，[`dsh-tool-research-report`](../../packages/research/tool-research-report) 校验并发布报告，[`dsh-research-cli`](../../packages/research/research-cli) 向 skill 与自动化暴露相同 compiler。
+技术调研子系统把规范化 brief 编译为固定 GitHub commit 的证据，以 sealed ledger 校验语义化报告，并从持久 session event 投影发布健康状态。[`dsh-research`](../../packages/research/research) 负责共享 compiler 约定，[`dsh-tool-research`](../../packages/research/tool-research) 向 agent 暴露有界采集，[`dsh-tool-research-report`](../../packages/research/tool-research-report) 校验并发布报告，[`dsh-research-cli`](../../packages/research/research-cli) 向 skill 与自动化暴露相同 compiler，[`dsh-research-eval`](../../packages/research/research-eval) 在不改变 compiler 语义的情况下比较这些编排路线。
 
 DeepWiki 与 heuristic navigator 只生成候选路径。compiler 先用不可变仓库树验证这些路径，再读取对应 GitHub 文件，然后才能创建 canonical evidence；navigation 输出本身不能支撑 claim。
 
@@ -101,3 +101,9 @@ interface ResearchHealthProjection {
 ```
 
 `healthy` 要求六项 correctness fact 全部成立：revision 已固定、证据 provenance 完整、critical claim 有证据、popularity 与 topic-match 轴独立、恰好发布一次，以及回执的 hash 与 artifact path 一致。OpenTelemetry 导出只使用 report family 与 compiler version 作为 attribute；仓库名、路径、prompt、source 和报告文本都不进入指标。效率基线在 30 次可比运行前保持 undefined，此后使用 median、p95、MAD 与 `p95 + 3 × MAD` warning threshold。
+
+## 对比评测
+
+`zj-research-experiment/v1` manifest 固定 corpus、compiler artifact hash、policy、model、Judge、report family、cache cohort、navigation 配置、重复次数和单次运行预算。受控 case 还会标识一个 sealed ledger，因此 Agent 与 skill arm 只在编排以及 prompt 或 skill 指令上不同。原生 case 将证据采集保留在各 arm 内，并作为独立 lane 报告。
+
+每次 run 向 experiment-owned log 追加一个 `research-eval/run-started` fact 和一个 terminal fact。Receipt 是这对 event 的确定性 projection，并分别保留 operational health、structural correctness、evidence quality 与 decision usefulness。Cohort reliability 统计每一个 start，包括 torn start-only log；语义与效率 baseline 至少需要 30 个通过结构硬门禁的成功报告。

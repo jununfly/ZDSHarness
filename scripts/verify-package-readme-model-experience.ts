@@ -163,6 +163,7 @@ const SENTENCE_MODEL_EXPERIENCE: Readonly<Record<string, SentenceContract>> = {
   'packages/github/github': { kind: 'indirect', reason: 'The provider registry delegates model rendering to dsh-tool-github.' },
   'packages/github/github-rest': { kind: 'indirect', reason: 'The provider backend delegates model rendering to dsh-tool-github.' },
   'packages/research/research': { kind: 'indirect', reason: 'Research Consumers own model-visible brief and ledger projection.' },
+  'packages/research/research-eval': { kind: 'indirect', reason: 'Experiment arm and Judge adapters own model-visible requests.' },
   'packages/research/research-cli': { kind: 'indirect', reason: 'Skill and automation adapters own model-visible compiler projection.' },
   'packages/research/research-report': { kind: 'indirect', reason: 'Report Consumers and standalone adapters own the model-visible compiled artifact.' },
   'packages/research/research-telemetry-otel': { kind: 'none', reason: 'The exporter observes durable evaluation and usage facts after model-visible work is complete.' },

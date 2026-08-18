@@ -2,7 +2,7 @@
 
 English | [中文](research.zh.md)
 
-The technical research subsystem compiles a normalized brief into commit-pinned GitHub evidence, validates a semantic report against that sealed ledger, and projects publication health from durable session events. [`dsh-research`](../../packages/research/research) owns the shared compiler contracts, [`dsh-tool-research`](../../packages/research/tool-research) exposes bounded collection to an agent, [`dsh-tool-research-report`](../../packages/research/tool-research-report) validates and publishes reports, and [`dsh-research-cli`](../../packages/research/research-cli) exposes the same compilers to skills and automation.
+The technical research subsystem compiles a normalized brief into commit-pinned GitHub evidence, validates a semantic report against that sealed ledger, and projects publication health from durable session events. [`dsh-research`](../../packages/research/research) owns the shared compiler contracts, [`dsh-tool-research`](../../packages/research/tool-research) exposes bounded collection to an agent, [`dsh-tool-research-report`](../../packages/research/tool-research-report) validates and publishes reports, [`dsh-research-cli`](../../packages/research/research-cli) exposes the same compilers to skills and automation, and [`dsh-research-eval`](../../packages/research/research-eval) compares those orchestration routes without changing compiler semantics.
 
 DeepWiki and heuristic navigators produce candidate paths only. The compiler verifies those paths against an immutable repository tree and reads the corresponding GitHub files before creating canonical evidence; navigation output cannot support a claim by itself.
 
@@ -101,3 +101,9 @@ interface ResearchHealthProjection {
 ```
 
 `healthy` requires all six correctness facts: pinned revisions, complete evidence provenance, evidence for critical claims, separated popularity and topic-match axes, exactly one publication, and a receipt whose hash and artifact paths are consistent. OpenTelemetry export uses only report family and compiler version as attributes; repository names, paths, prompts, sources, and report text remain excluded. Efficiency baselines remain undefined before 30 comparable runs and then use median, p95, MAD, and `p95 + 3 × MAD` warning thresholds.
+
+## Comparative evaluation
+
+A `zj-research-experiment/v1` manifest fixes the corpus, compiler artifact hash, policy, model, Judge, report family, cache cohort, navigation configuration, repetitions, and per-run budgets. Controlled cases also identify one sealed ledger, so Agent and skill arms differ only in orchestration and their prompt or skill instructions. Native cases keep evidence collection inside each arm and are reported as a separate lane.
+
+Each run appends one `research-eval/run-started` fact and one terminal fact to an experiment-owned log. A receipt is a deterministic projection of that exact pair and keeps operational health, structural correctness, evidence quality, and decision usefulness separate. Cohort reliability counts every start, including torn start-only logs; semantic and efficiency baselines require at least 30 successful reports that pass structural hard gates.

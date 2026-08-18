@@ -7,6 +7,7 @@
 | 包 | 角色 | 注册位置 |
 |---|---|---|
 | [`research/`](research/README.md) | 固定 source revision 并编译 versioned evidence ledger | library |
+| [`research-eval/`](research-eval/README.md) | 运行版本化 Agent/skill 实验并投影四层健康 receipt | executable library |
 | [`research-report/`](research-report/README.md) | 校验报告 family Markdown 并派生确定性离线 HTML | library |
 | [`research-cli/`](research-cli/README.md) | 通过 versioned stdin/stdout protocol 暴露共享 compiler | executable |
 | [`research-telemetry-otel/`](research-telemetry-otel/README.md) | 导出低基数健康、效率与模型成本指标 | 监听 `session/event` |

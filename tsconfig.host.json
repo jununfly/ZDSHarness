@@ -151,6 +151,7 @@
     { "path": "./packages/github/github-rest" },
     { "path": "./packages/github/tool-github" },
     { "path": "./packages/research/research" },
+    { "path": "./packages/research/research-eval" },
     { "path": "./packages/research/research-report" },
     { "path": "./packages/research/research-cli" },
     { "path": "./packages/research/research-telemetry-otel" },

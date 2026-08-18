@@ -3218,6 +3218,7 @@ export interface Config {
 - `@deepseek-ai/dsh-output-retention`（[`packages/util/output-retention/src/index.ts`](../packages/util/output-retention/src/index.ts)）
 - `@deepseek-ai/dsh-research`（[`packages/research/research/src/index.ts`](../packages/research/research/src/index.ts)）
 - `@deepseek-ai/dsh-research-cli`（[`packages/research/research-cli/src/index.ts`](../packages/research/research-cli/src/index.ts)）
+- `@deepseek-ai/dsh-research-eval`（[`packages/research/research-eval/src/index.ts`](../packages/research/research-eval/src/index.ts)）
 - `@deepseek-ai/dsh-research-report`（[`packages/research/research-report/src/index.ts`](../packages/research/research-report/src/index.ts)）
 - `@deepseek-ai/dsh-sandbox-windows-acl`（[`packages/sandbox/sandbox-windows-acl/src/index.ts`](../packages/sandbox/sandbox-windows-acl/src/index.ts)）
 - `@deepseek-ai/dsh-scope`（[`packages/core/scope/src/index.ts`](../packages/core/scope/src/index.ts)）

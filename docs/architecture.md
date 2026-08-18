@@ -105,6 +105,8 @@ Structured GitHub repository research follows the same split: [`dsh-github`](../
 
 Technical research compositions place the complete-brief [`dsh-research`](../packages/research/research) compiler above `ctx.github`: derived navigators select candidate paths, commit-pinned GitHub reads produce canonical evidence, Report IR validates claims and scores, and publication plus health telemetry derive from durable facts. The research preset does not mount raw GitHub or DeepWiki tools.
 
+[`dsh-research-eval`](../packages/research/research-eval) keeps comparative evaluation outside those compilers: a versioned manifest locks comparable inputs, arm adapters retain their distinct orchestration, and append-only run events project operational, structural, evidence-quality, and decision-usefulness facts.
+
 ## Where new behavior goes
 
 New behavior attaches to a documented extension point. Changing the loop itself updates this map.

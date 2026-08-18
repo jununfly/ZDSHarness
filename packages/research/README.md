@@ -7,6 +7,7 @@ This group contains the research contracts, canonical evidence compiler, and mod
 | Package | Role | Registration |
 |---|---|---|
 | [`research/`](research/README.md) | Pins source revisions and compiles a versioned evidence ledger | library |
+| [`research-eval/`](research-eval/README.md) | Runs versioned Agent/skill experiments and projects four-layer health receipts | executable library |
 | [`research-report/`](research-report/README.md) | Validates report-family Markdown and derives deterministic offline HTML | library |
 | [`research-cli/`](research-cli/README.md) | Exposes the shared compilers through a versioned stdin/stdout protocol | executable |
 | [`research-telemetry-otel/`](research-telemetry-otel/README.md) | Exports low-cardinality health, efficiency, and model-cost metrics | listens to `session/event` |

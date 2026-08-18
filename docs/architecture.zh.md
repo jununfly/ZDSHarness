@@ -109,6 +109,8 @@ seam 正是替换一个提供方就能改变整个产品的原因。文件系统
 
 技术调研组合在 `ctx.github` 之上放置完整 brief 的 [`dsh-research`](../packages/research/research) compiler：派生 navigator 选择候选路径，固定 commit 的 GitHub 读取产生 canonical evidence，Report IR 校验 claim 与 score，发布和健康 telemetry 从 durable fact 派生。调研 preset 不挂载原始 GitHub 或 DeepWiki tool。
 
+[`dsh-research-eval`](../packages/research/research-eval) 将对比评测留在这些 compiler 之外：版本化 manifest 固定可比输入，arm adapter 保留各自编排方式，append-only run event 投影 operational、structural、evidence-quality 与 decision-usefulness fact。
+
 ## 新行为的归属位置
 
 新行为附加到已有文档记录的扩展点。改动循环本身时，本映射随之更新。
