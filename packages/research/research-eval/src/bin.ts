@@ -1,12 +1,20 @@
 #!/usr/bin/env node
 /** Standalone manifest validation and receipt projection for research experiments. */
-import { parseResearchExperimentEvents, parseResearchExperimentManifest, projectResearchRunReceipt } from './index.ts'
+import {
+  calibrateResearchJudge,
+  parseResearchExperimentEvents,
+  parseResearchExperimentManifest,
+  projectResearchRunReceipt,
+  validateResearchEvaluationAssets,
+} from './index.ts'
 
 const PROTOCOL = 'zj-research-eval-cli/v1' as const
 
 type Request =
   | { readonly protocol: typeof PROTOCOL; readonly operation: 'describe' }
   | { readonly protocol: typeof PROTOCOL; readonly operation: 'validate-manifest'; readonly manifest: unknown }
+  | { readonly protocol: typeof PROTOCOL; readonly operation: 'validate-assets'; readonly manifest: unknown; readonly rubrics: unknown; readonly annotations: unknown; readonly calibration: unknown }
+  | { readonly protocol: typeof PROTOCOL; readonly operation: 'calibrate-judge'; readonly rubrics: unknown; readonly calibration: unknown }
   | { readonly protocol: typeof PROTOCOL; readonly operation: 'project-receipt'; readonly events: unknown }
 
 async function main(): Promise<void> {
@@ -19,10 +27,26 @@ async function main(): Promise<void> {
   let result: unknown
   switch (request.operation) {
     case 'describe':
-      result = { operations: ['validate-manifest', 'project-receipt'], manifestSchemas: ['zj-research-experiment/v1'], receiptSchemas: ['zj-research-run-receipt/v1'] }
+      result = {
+        operations: ['validate-manifest', 'validate-assets', 'calibrate-judge', 'project-receipt'],
+        manifestSchemas: ['zj-research-experiment/v1'],
+        evaluationAssetSchemas: ['zj-research-rubric-set/v1', 'zj-research-human-annotation-set/v1', 'zj-research-judge-calibration-set/v1'],
+        receiptSchemas: ['zj-research-run-receipt/v2'],
+      }
       break
     case 'validate-manifest':
       result = parseResearchExperimentManifest(request.manifest)
+      break
+    case 'validate-assets':
+      result = validateResearchEvaluationAssets(
+        parseResearchExperimentManifest(request.manifest),
+        request.rubrics,
+        request.annotations,
+        request.calibration,
+      )
+      break
+    case 'calibrate-judge':
+      result = calibrateResearchJudge(request.rubrics, request.calibration)
       break
     case 'project-receipt':
       result = projectResearchRunReceipt(parseResearchExperimentEvents(request.events))

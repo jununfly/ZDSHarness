@@ -106,4 +106,6 @@ interface ResearchHealthProjection {
 
 `zj-research-experiment/v1` manifest 固定 corpus、compiler artifact hash、policy、model、Judge、report family、cache cohort、navigation 配置、重复次数和单次运行预算。受控 case 还会标识一个 sealed ledger，因此 Agent 与 skill arm 只在编排以及 prompt 或 skill 指令上不同。原生 case 将证据采集保留在各 arm 内，并作为独立 lane 报告。
 
+三个不可追改资产约束质量 case：`zj-research-rubric-set/v1` 定义加权 criterion 和 Judge threshold，`zj-research-human-annotation-set/v1` 把每个 case 绑定到 evidence verdict 以及可接受的 recommendation fingerprint 或 abstention，`zj-research-judge-calibration-set/v1` 则为固定报告配对盲测 Judge 结果与人工评分。只有所有质量 case 都能跨资产解析，且校准通过样本数、评分误差、推荐一致率和遗漏风险限制，runtime 才接纳质量结果。
+
 每次 run 向 experiment-owned log 追加一个 `research-eval/run-started` fact 和一个 terminal fact。Receipt 是这对 event 的确定性 projection，并分别保留 operational health、structural correctness、evidence quality 与 decision usefulness。Cohort reliability 统计每一个 start，包括 torn start-only log；语义与效率 baseline 至少需要 30 个通过结构硬门禁的成功报告。

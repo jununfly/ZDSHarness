@@ -1,6 +1,10 @@
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-import { expandResearchExperiment, parseResearchExperimentManifest } from '@deepseek-ai/dsh-research-eval'
+import {
+  expandResearchExperiment,
+  parseResearchExperimentManifest,
+  validateResearchEvaluationAssets,
+} from '@deepseek-ai/dsh-research-eval'
 import { describe, expect, it } from 'vitest'
 
 async function fixture(name: string): Promise<unknown> {
@@ -28,5 +32,29 @@ describe('research evaluation corpus fixtures', () => {
     const manifest = parseResearchExperimentManifest(await fixture('reliability-v1.manifest.json'))
     expect(manifest.cases.every(item => item.purpose === 'reliability' && item.scenario === 'upstream-failure')).toBe(true)
     expect(expandResearchExperiment(manifest)).toHaveLength(8)
+  })
+
+  it('cross-validates one human annotation and calibrated Judge sample per quality case', async () => {
+    const manifest = parseResearchExperimentManifest(await fixture('controlled-quality-v1.manifest.json'))
+    const summary = validateResearchEvaluationAssets(
+      manifest,
+      await fixture('controlled-quality-v1.rubrics.json'),
+      await fixture('controlled-quality-v1.annotations.json'),
+      await fixture('controlled-quality-v1.calibration.json'),
+    )
+    expect(summary).toMatchObject({
+      corpusVersion: 'controlled-quality/v1',
+      rubricSetVersion: 'controlled-quality-rubrics/v1',
+      annotationSetVersion: 'controlled-quality-annotations/v1',
+      calibrationSetVersion: 'controlled-quality-judge-calibration/v1',
+      qualityCaseCount: 10,
+      calibration: {
+        sampleCount: 10,
+        withinToleranceRate: 1,
+        recommendationAgreement: 1,
+        riskCountMeanAbsoluteError: 0.1,
+        passed: true,
+      },
+    })
   })
 })

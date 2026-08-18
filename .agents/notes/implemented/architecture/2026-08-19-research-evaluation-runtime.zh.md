@@ -12,7 +12,9 @@ Status: implemented
 
 `@deepseek-ai/dsh-research-eval` 在 Evidence Compiler 与 Report Compiler 之外负责对比评测。版本化 experiment manifest 固定 compiler artifact、policy、model、Judge、report family、cache cohort、navigation 配置、预算、corpus case、arm 和重复次数。受控 case 必须共享 sealed-ledger fingerprint；原生 case 保持独立 lane。
 
-Runtime 通过一个 `run()` interface 接收注入的 arm 与盲测 Judge adapter。它在外部工作前追加 start fact，并在返回前追加且仅追加一个 terminal fact。Receipt 从 append-only event pair 派生，保留四个独立层次：operational health、structural correctness、evidence quality 与 decision usefulness。Cohort reliability 以每一个 start 为分母；语义与效率 baseline 则需要 30 个通过结构硬门禁的成功报告。
+Runtime 通过一个 `run()` interface 接收注入的 arm 与盲测 Judge adapter。它在外部工作前追加 version-two start fact，并在返回前追加且仅追加一个 terminal fact。Version-two receipt 从 append-only event pair 派生，保留四个独立层次：operational health、structural correctness、evidence quality 与 decision usefulness。Decision usefulness 记录 rubric score、recommendation 是否可接受以及遗漏风险数。Cohort reliability 以每一个 start 为分母；语义与效率 baseline 则需要 30 个通过结构硬门禁的成功报告。
+
+人工评测使用三种不可变资产。Rubric set 固定各场景的加权标准和立即执行的 Judge 校准阈值。Annotation set 记录每个 quality case 的预期证据状态、source-span hash、必需权衡与风险、可接受 recommendation 集合以及 abstain 是否有效。Calibration set 为每个 quality case 的一份不可变报告配对人工分数与盲测 Judge 分数。交叉校验会在 run 进入 baseline cohort 前拒绝 case 缺失、版本或 Judge 配置不匹配、证据状态含糊以及未达到 policy 的校准。
 
 共享 compiler 保持唯一，但编排路线不必只有一种实现。Agent 可以成为团队默认入口，同时 skill 可以为不同工作流继续存在。只有评测与使用数据都表明某条路线没有独立价值时，才会退役它。
 
@@ -30,8 +32,8 @@ Runtime 通过一个 `run()` interface 接收注入的 arm 与盲测 Judge adapt
 
 Experiment host 必须提供 durable event storage 以及显式 arm 与 Judge adapter。首个 standalone CLI 校验 manifest 并投影 receipt；production Agent 与 skill host 仍作为独立 adapter。原始 provider diagnostic 留在受控 log 或 Error cause 中，durable receipt 只保留稳定失败分类。
 
-版本化 manifest 与不可变 receipt 让受控比较可复现，也保留原生路线差异。它们同时引入 artifact governance 责任：corpus 或 rubric 的语义变化会创建新版本，绝不并入已有 baseline。
+版本化 manifest、评测资产与不可变 receipt 让受控比较可复现，也保留原生路线差异。它们同时引入 artifact governance 责任：corpus、rubric、annotation 或 calibration 的语义变化会创建新版本，绝不并入已有 baseline。Judge 校准阈值在采样前生效；cohort SLO 在获得 30 个可比成功报告前保持未定义。
 
 ## Verification
 
-Package test 覆盖受控 manifest 不变量、盲测 Judge request、唯一 terminal fact、取消、duration 与 resource budget、adapter 与 Judge failure、JSONL durability、torn log、30 样本下限和真实 CLI process。
+Package test 覆盖受控 manifest 不变量、盲测 Judge request、唯一 terminal fact、取消、duration 与 resource budget、adapter 与 Judge failure、JSONL durability、torn log、rubric 与 annotation 歧义、每项校准阈值、完整 case 覆盖、30 样本下限和真实 CLI process。

@@ -153,7 +153,7 @@ describe.skipIf(!process.env.DEEPSEEK_API_KEY)('tech research agent real APIs', 
           id: 'smoke-judge',
           evaluate: () => Promise.resolve({
             evidenceQuality: { criticalCoverage: 100, entailment: 100, unknownCorrectness: 100, provenanceCompleteness: 100 },
-            decisionUsefulness: { rubricScore: 100, keyRisksOmitted: 0 },
+            decisionUsefulness: { rubricScore: 100, recommendationAcceptable: true, keyRisksOmitted: 0 },
           }),
         },
         { append(event) { lifecycle.push(event); return Promise.resolve() } },

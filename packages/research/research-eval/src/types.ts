@@ -137,8 +137,115 @@ export interface ResearchJudgeResult {
   }
   readonly decisionUsefulness: {
     readonly rubricScore: number
+    readonly recommendationAcceptable: boolean
     readonly keyRisksOmitted: number
   }
+}
+
+/** Human-owned scoring rules shared by one immutable corpus version. */
+export interface ResearchEvaluationRubricSet {
+  readonly schema: 'zj-research-rubric-set/v1'
+  readonly version: string
+  readonly corpusVersion: string
+  readonly rubrics: readonly ResearchEvaluationRubric[]
+  readonly calibration: ResearchJudgeCalibrationPolicy
+}
+
+/** One scenario-specific decision-usefulness rubric. */
+export interface ResearchEvaluationRubric {
+  readonly id: string
+  readonly scenario: Exclude<ResearchExperimentCase['scenario'], 'upstream-failure'>
+  readonly criteria: readonly ResearchEvaluationRubricCriterion[]
+}
+
+/** Weighted human criterion scored on a zero-to-four ordinal scale. */
+export interface ResearchEvaluationRubricCriterion {
+  readonly id: string
+  readonly description: string
+  readonly weight: number
+}
+
+/** Immediate Judge calibration thresholds that precede statistical cohort SLOs. */
+export interface ResearchJudgeCalibrationPolicy {
+  readonly minimumSamples: number
+  readonly scoreTolerance: number
+  readonly maxMeanAbsoluteError: number
+  readonly minWithinToleranceRate: number
+  readonly minRecommendationAgreement: number
+  readonly maxRiskCountMeanAbsoluteError: number
+}
+
+/** Human-maintained evidence and decision truth for every quality case. */
+export interface ResearchHumanAnnotationSet {
+  readonly schema: 'zj-research-human-annotation-set/v1'
+  readonly version: string
+  readonly corpusVersion: string
+  readonly rubricSetVersion: string
+  readonly cases: readonly ResearchHumanCaseAnnotation[]
+}
+
+/** Human truth for one case without prescribing a unique recommendation. */
+export interface ResearchHumanCaseAnnotation {
+  readonly caseId: ResearchCaseId
+  readonly rubricVersion: string
+  readonly evidence: readonly ResearchHumanEvidenceExpectation[]
+  readonly decision: {
+    readonly requiredTradeoffIds: readonly string[]
+    readonly requiredRiskIds: readonly string[]
+    readonly acceptableRecommendationFingerprints: readonly string[]
+    readonly abstentionAcceptable: boolean
+  }
+}
+
+/** Expected support state and canonical spans for one research criterion. */
+export interface ResearchHumanEvidenceExpectation {
+  readonly criterionId: string
+  readonly verdict: 'supported' | 'unknown' | 'conflicting'
+  readonly sourceSpans: readonly ResearchHumanSourceSpan[]
+}
+
+/** Immutable reference to one human-verified excerpt in a sealed ledger. */
+export interface ResearchHumanSourceSpan {
+  readonly evidenceId: string
+  readonly quoteSha256: string
+}
+
+/** Paired human and blind-Judge scores used only for Judge calibration. */
+export interface ResearchJudgeCalibrationSet {
+  readonly schema: 'zj-research-judge-calibration-set/v1'
+  readonly version: string
+  readonly corpusVersion: string
+  readonly rubricSetVersion: string
+  readonly judge: ResearchExperimentManifest['judge']
+  readonly samples: readonly ResearchJudgeCalibrationSample[]
+}
+
+/** One report scored independently by a human and the configured Judge. */
+export interface ResearchJudgeCalibrationSample {
+  readonly caseId: ResearchCaseId
+  readonly reportHash: string
+  readonly human: ResearchJudgeResult
+  readonly judge: ResearchJudgeResult
+}
+
+/** Deterministic Judge-to-human agreement facts and their policy verdict. */
+export interface ResearchJudgeCalibrationResult {
+  readonly sampleCount: number
+  readonly scoreMeanAbsoluteError: number
+  readonly withinToleranceRate: number
+  readonly recommendationAgreement: number
+  readonly riskCountMeanAbsoluteError: number
+  readonly passed: boolean
+}
+
+/** Cross-validated versions and counts for one complete quality corpus. */
+export interface ResearchEvaluationAssetSummary {
+  readonly corpusVersion: string
+  readonly rubricSetVersion: string
+  readonly annotationSetVersion: string
+  readonly calibrationSetVersion: string
+  readonly qualityCaseCount: number
+  readonly calibration: ResearchJudgeCalibrationResult
 }
 
 /** Blind semantic evaluator selected by the experiment host. */
@@ -162,21 +269,21 @@ export type ResearchRunFailureClass =
 /** Append-only fact for one experiment run. */
 export type ResearchExperimentEvent =
   | {
-    readonly schema: 'zj-research-experiment-event/v1'
+    readonly schema: 'zj-research-experiment-event/v2'
     readonly type: 'research-eval/run-started'
     readonly seq: 1
     readonly time: number
     readonly data: ResearchRunIdentity
   }
   | {
-    readonly schema: 'zj-research-experiment-event/v1'
+    readonly schema: 'zj-research-experiment-event/v2'
     readonly type: 'research-eval/run-completed'
     readonly seq: 2
     readonly time: number
     readonly data: ResearchRunIdentity & { readonly result: ResearchArmResult; readonly judge: ResearchJudgeResult }
   }
   | {
-    readonly schema: 'zj-research-experiment-event/v1'
+    readonly schema: 'zj-research-experiment-event/v2'
     readonly type: 'research-eval/run-failed' | 'research-eval/run-cancelled' | 'research-eval/run-budget-exhausted'
     readonly seq: 2
     readonly time: number
@@ -209,7 +316,7 @@ export interface ResearchRunHealth {
 
 /** Immutable projection for one terminal run. */
 export interface ResearchRunReceipt {
-  readonly schema: 'zj-research-run-receipt/v1'
+  readonly schema: 'zj-research-run-receipt/v2'
   readonly identity: ResearchRunIdentity
   readonly health: ResearchRunHealth
   readonly report: ResearchArmResult['report'] | null

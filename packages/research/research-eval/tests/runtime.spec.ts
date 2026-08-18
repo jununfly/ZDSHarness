@@ -118,7 +118,7 @@ describe('research experiment runtime', () => {
           judgeRequests.push(request)
           return Promise.resolve({
             evidenceQuality: { criticalCoverage: 100, entailment: 95, unknownCorrectness: 90, provenanceCompleteness: 100 },
-            decisionUsefulness: { rubricScore: 92, keyRisksOmitted: 0 },
+            decisionUsefulness: { rubricScore: 92, recommendationAcceptable: true, keyRisksOmitted: 0 },
           })
         },
       },
@@ -171,12 +171,12 @@ describe('research experiment runtime', () => {
       {
         expected: 'judge-failure',
         arm: { id: 'agent-adapter', run: () => Promise.resolve(armResult()) },
-        judge: { id: 'blind-judge', evaluate: () => Promise.resolve({ evidenceQuality: { criticalCoverage: 101, entailment: 100, unknownCorrectness: 100, provenanceCompleteness: 100 }, decisionUsefulness: { rubricScore: 100, keyRisksOmitted: 0 } }) },
+        judge: { id: 'blind-judge', evaluate: () => Promise.resolve({ evidenceQuality: { criticalCoverage: 101, entailment: 100, unknownCorrectness: 100, provenanceCompleteness: 100 }, decisionUsefulness: { rubricScore: 100, recommendationAcceptable: true, keyRisksOmitted: 0 } }) },
       },
       {
         expected: 'judge-failure',
         arm: { id: 'agent-adapter', run: () => Promise.resolve(armResult()) },
-        judge: { id: 'blind-judge', evaluate: () => Promise.resolve({ evidenceQuality: { criticalCoverage: 100, entailment: 100, unknownCorrectness: 100, provenanceCompleteness: 100 }, decisionUsefulness: { rubricScore: 100, keyRisksOmitted: -1 } }) },
+        judge: { id: 'blind-judge', evaluate: () => Promise.resolve({ evidenceQuality: { criticalCoverage: 100, entailment: 100, unknownCorrectness: 100, provenanceCompleteness: 100 }, decisionUsefulness: { rubricScore: 100, recommendationAcceptable: true, keyRisksOmitted: -1 } }) },
       },
     ] as const
     for (const item of cases) {
@@ -238,7 +238,7 @@ describe('research experiment runtime', () => {
         manifest(),
         { caseId: ResearchCaseId('selection'), armId: ResearchArmId('agent'), repetition: 1 },
         { id: 'agent-adapter', run: () => Promise.resolve(armResult()) },
-        { id: 'blind-judge', evaluate: () => Promise.resolve({ evidenceQuality: { criticalCoverage: 100, entailment: 100, unknownCorrectness: 100, provenanceCompleteness: 100 }, decisionUsefulness: { rubricScore: 100, keyRisksOmitted: 0 } }) },
+        { id: 'blind-judge', evaluate: () => Promise.resolve({ evidenceQuality: { criticalCoverage: 100, entailment: 100, unknownCorrectness: 100, provenanceCompleteness: 100 }, decisionUsefulness: { rubricScore: 100, recommendationAcceptable: true, keyRisksOmitted: 0 } }) },
         new JsonlResearchExperimentEventSink(path),
       )
       const events = await readResearchExperimentEventLog(path)
@@ -253,13 +253,13 @@ describe('research experiment runtime', () => {
     const experimentId = ResearchExperimentId('exp')
     const selection = { caseId: ResearchCaseId('case'), armId: ResearchArmId('arm'), repetition: 1 }
     const identity = { runId: researchRunId(experimentId, selection), experimentId, ...selection }
-    const started: ResearchExperimentEvent = { schema: 'zj-research-experiment-event/v1', type: 'research-eval/run-started', seq: 1, time: 1, data: identity }
-    const failed: ResearchExperimentEvent = { schema: 'zj-research-experiment-event/v1', type: 'research-eval/run-failed', seq: 2, time: 2, data: { ...identity, failureClass: 'adapter-failure' } }
+    const started: ResearchExperimentEvent = { schema: 'zj-research-experiment-event/v2', type: 'research-eval/run-started', seq: 1, time: 1, data: identity }
+    const failed: ResearchExperimentEvent = { schema: 'zj-research-experiment-event/v2', type: 'research-eval/run-failed', seq: 2, time: 2, data: { ...identity, failureClass: 'adapter-failure' } }
     expect(() => projectResearchRunReceipt([started])).toThrow(/exactly one start and one terminal/)
     expect(() => projectResearchRunReceipt([started, failed, failed])).toThrow(/exactly one start and one terminal/)
     expect(() => projectResearchRunReceipt([started, started])).toThrow(/end with one terminal/)
     const changed: ResearchExperimentEvent = {
-      schema: 'zj-research-experiment-event/v1',
+      schema: 'zj-research-experiment-event/v2',
       type: 'research-eval/run-failed',
       seq: 2,
       time: 2,
@@ -278,7 +278,7 @@ describe('research experiment runtime', () => {
       manifest(),
       { caseId: ResearchCaseId('selection'), armId: ResearchArmId('agent'), repetition: 1 },
       { id: 'agent-adapter', run: () => Promise.resolve(result) },
-      { id: 'blind-judge', evaluate: () => Promise.resolve({ evidenceQuality: { criticalCoverage: 100, entailment: 100, unknownCorrectness: 100, provenanceCompleteness: 100 }, decisionUsefulness: { rubricScore: 100, keyRisksOmitted: 0 } }) },
+      { id: 'blind-judge', evaluate: () => Promise.resolve({ evidenceQuality: { criticalCoverage: 100, entailment: 100, unknownCorrectness: 100, provenanceCompleteness: 100 }, decisionUsefulness: { rubricScore: 100, recommendationAcceptable: true, keyRisksOmitted: 0 } }) },
       sink(events),
     )
     expect(receipt.health).toMatchObject({ hardGatePassed: false, overall: 'failed' })
@@ -292,7 +292,7 @@ describe('research experiment runtime', () => {
         { ...manifest(), repetitions: 30 },
         { caseId: ResearchCaseId('selection'), armId: ResearchArmId('agent'), repetition },
         { id: 'agent-adapter', run: () => Promise.resolve(armResult()) },
-        { id: 'blind-judge', evaluate: () => Promise.resolve({ evidenceQuality: { criticalCoverage: 100, entailment: 95, unknownCorrectness: 90, provenanceCompleteness: 100 }, decisionUsefulness: { rubricScore: 92, keyRisksOmitted: 0 } }) },
+        { id: 'blind-judge', evaluate: () => Promise.resolve({ evidenceQuality: { criticalCoverage: 100, entailment: 95, unknownCorrectness: 90, provenanceCompleteness: 100 }, decisionUsefulness: { rubricScore: 92, recommendationAcceptable: true, keyRisksOmitted: 0 } }) },
         sink(events),
       )
       successfulRuns.push(events)

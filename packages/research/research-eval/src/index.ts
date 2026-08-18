@@ -1,6 +1,7 @@
 /** Versioned research experiment runtime and receipt projection. @module @deepseek-ai/dsh-research-eval */
 import { createHash } from 'node:crypto'
 import { z } from 'zod'
+import { parseResearchJudgeResult, researchJudgeResultSchema } from './rubric.ts'
 import type {
   ResearchArmAdapter,
   ResearchArmId as ResearchArmIdType,
@@ -25,10 +26,10 @@ import type {
 
 export * from './types.ts'
 export * from './jsonl.ts'
+export * from './rubric.ts'
 
 const sha256 = z.string().regex(/^[a-f0-9]{64}$/)
 const positiveInteger = z.number().int().positive()
-const score = z.number().min(0).max(100)
 
 const identitySchema = z.object({
   runId: z.string().min(1),
@@ -63,28 +64,23 @@ const armResultSchema = z.object({
   }),
 })
 
-const judgeResultSchema = z.object({
-  evidenceQuality: z.object({ criticalCoverage: score, entailment: score, unknownCorrectness: score, provenanceCompleteness: score }),
-  decisionUsefulness: z.object({ rubricScore: score, keyRisksOmitted: z.number().int().nonnegative() }),
-})
-
 const eventSchema = z.discriminatedUnion('type', [
   z.object({
-    schema: z.literal('zj-research-experiment-event/v1'),
+    schema: z.literal('zj-research-experiment-event/v2'),
     type: z.literal('research-eval/run-started'),
     seq: z.literal(1),
     time: z.number().int().nonnegative(),
     data: identitySchema,
   }),
   z.object({
-    schema: z.literal('zj-research-experiment-event/v1'),
+    schema: z.literal('zj-research-experiment-event/v2'),
     type: z.literal('research-eval/run-completed'),
     seq: z.literal(2),
     time: z.number().int().nonnegative(),
-    data: identitySchema.extend({ result: armResultSchema, judge: judgeResultSchema }),
+    data: identitySchema.extend({ result: armResultSchema, judge: researchJudgeResultSchema }),
   }),
   z.object({
-    schema: z.literal('zj-research-experiment-event/v1'),
+    schema: z.literal('zj-research-experiment-event/v2'),
     type: z.enum(['research-eval/run-failed', 'research-eval/run-cancelled', 'research-eval/run-budget-exhausted']),
     seq: z.literal(2),
     time: z.number().int().nonnegative(),
@@ -233,7 +229,7 @@ export class ResearchExperimentRuntime {
     }
     const startedAt = this.now()
     const started: ResearchExperimentEvent = {
-      schema: 'zj-research-experiment-event/v1',
+      schema: 'zj-research-experiment-event/v2',
       type: 'research-eval/run-started',
       seq: 1,
       time: startedAt,
@@ -268,12 +264,12 @@ export class ResearchExperimentRuntime {
           recommendationFingerprint: result.report.recommendationFingerprint,
           structural: result.structural,
         }, controller.signal), controller.signal)
-        enforceJudgeResult(judge)
+        judge = parseResearchJudgeResult(judge)
       } catch (error) {
         throw new JudgeFailure('research judge failed', { cause: error })
       }
       terminal = {
-        schema: 'zj-research-experiment-event/v1',
+        schema: 'zj-research-experiment-event/v2',
         type: 'research-eval/run-completed',
         seq: 2,
         time: this.now(),
@@ -282,7 +278,7 @@ export class ResearchExperimentRuntime {
     } catch (error) {
       const failureClass = classifyFailure(error, durationExpired, signal?.aborted === true)
       terminal = {
-        schema: 'zj-research-experiment-event/v1',
+        schema: 'zj-research-experiment-event/v2',
         type: failureClass === 'duration-budget' || failureClass === 'resource-budget'
           ? 'research-eval/run-budget-exhausted'
           : failureClass === 'cancelled'
@@ -347,7 +343,7 @@ export function projectResearchRunReceipt(events: readonly ResearchExperimentEve
     overall: hardGatePassed ? 'evaluated' : 'failed',
   }
   return {
-    schema: 'zj-research-run-receipt/v1',
+    schema: 'zj-research-run-receipt/v2',
     identity: started.data,
     health,
     report: terminal.data.result.report,
@@ -452,12 +448,6 @@ function enforceArmResult(manifest: ResearchExperimentManifest, result: Research
     throw new ResourceBudgetFailure('research arm exceeded the model-token budget')
 }
 
-function enforceJudgeResult(result: ResearchJudgeResult): void {
-  for (const value of Object.values(result.evidenceQuality)) score.parse(value)
-  score.parse(result.decisionUsefulness.rubricScore)
-  z.number().int().nonnegative().parse(result.decisionUsefulness.keyRisksOmitted)
-}
-
 function classifyFailure(error: unknown, durationExpired: boolean, callerCancelled: boolean): ResearchRunFailureClass {
   if (durationExpired) return 'duration-budget'
   if (callerCancelled) return 'cancelled'
@@ -502,7 +492,7 @@ function sameIdentity(left: ResearchRunIdentity, right: ResearchRunIdentity): bo
 }
 
 function emptyReceipt(identity: ResearchRunIdentity, health: ResearchRunHealth): ResearchRunReceipt {
-  return { schema: 'zj-research-run-receipt/v1', identity, health, report: null, publication: null, collection: null, usage: null }
+  return { schema: 'zj-research-run-receipt/v2', identity, health, report: null, publication: null, collection: null, usage: null }
 }
 
 /**
