@@ -248,6 +248,8 @@
         "./packages/subagent/*/src",
         "./packages/jobs/*/src",
         "./packages/workflow/*/src",
+        "./packages/github/*/src",
+        "./packages/research/*/src",
         "./packages/web/*/src",
         "./packages/attachment/*/src",
         "./packages/spill/*/src",

@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `learning_roadmap.json` | 最后更新: 2026-08-17 14:17:51
+> 数据文件: `learning_roadmap.json` | 最后更新: 2026-08-18 21:24:48
 
 [~][X+] 1. ZHarness 学习计划
 ├── [x][Y+] 1-1. 跑通开发环境
@@ -27,5 +27,5 @@
 └── [~][Y+] 1-6. ZHarness 使用期：从学习转入构建
     ├── [x][Y+] 1-6-1. 真实 LLM 端到端验证：DEEPSEEK_API_KEY 跑通完整 agent loop
     ├── [ ][X+] 1-6-2. llm 能力包按需精读：遇到 llm 行为问题时带出
-    └── [ ][X+] 1-6-3. 第一个实际项目立项：e2e 跑通后定，候选 ZBrain chat
+    └── [x][Y+] 1-6-3. 技术方案调研分析 agent
 <!-- ROADMAP_SECTION_END -->

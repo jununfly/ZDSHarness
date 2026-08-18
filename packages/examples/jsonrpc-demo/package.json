@@ -48,10 +48,17 @@
     "@deepseek-ai/dsh-app-boot": "workspace:^"
   },
   "peerDependencies": {
+    "@deepseek-ai/dsh-sdk-jsonrpc-server": "workspace:^",
     "@deepseek-ai/dsh-invariants": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-sdk-jsonrpc-server": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@deepseek-ai/dsh-sdk-jsonrpc-server": "workspace:^",
     "@deepseek-ai/dsh-invariants": "workspace:^",
     "@deepseek-ai/cordis": "workspace:^"
   }

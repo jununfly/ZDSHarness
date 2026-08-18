@@ -1,0 +1,75 @@
+# SDK composition for the technical-research agent. Stdout remains reserved
+# for JSON-RPC.
+
+- id: sdk-jsonrpc-server
+  name: '@deepseek-ai/dsh-sdk-jsonrpc-server'
+  config:
+    maxTokensAsSuccess: false
+
+- id: llm-deepseek
+  name: '@deepseek-ai/dsh-llm-deepseek'
+  config:
+    models:
+      - id: deepseek-v4-flash
+        contextWindow: 1000000
+        maxTokens: 32768
+
+- id: github
+  name: '@deepseek-ai/dsh-github'
+
+- id: github-rest
+  name: '@deepseek-ai/dsh-github-rest'
+  config:
+    tokenEnv: GITHUB_TOKEN
+    timeoutMs: 10000
+
+- id: tool-research
+  name: '@deepseek-ai/dsh-tool-research'
+  config:
+    deepWikiUrl: https://mcp.deepwiki.com/mcp
+    deepWikiTimeoutMs: 10000
+    externalNavigationRepositories:
+      - earendil-works/pi
+      - AutoJunjie/awesome-agent-harness
+      - deepseek-ai/deepseek-harness
+
+- id: fs-local
+  name: '@deepseek-ai/dsh-fs-local'
+  config:
+    cwd: !!js process.env.DSH_CWD ?? process.cwd()
+
+- id: tool-research-report
+  name: '@deepseek-ai/dsh-tool-research-report'
+
+- id: repeat-tool-reminder
+  name: '@deepseek-ai/dsh-repeat-tool-reminder'
+  config:
+    thresholds: [2, 3, 5]
+    include: [research_collect_evidence]
+
+- id: research-telemetry-otel
+  name: '@deepseek-ai/dsh-research-telemetry-otel'
+  disabled: !!js process.env.DSH_RESEARCH_METRICS_URL === undefined
+  config:
+    url: !!js process.env.DSH_RESEARCH_METRICS_URL
+
+- id: research-policy
+  name: './src/research-policy.ts'
+
+- id: agent-spine
+  name: '@deepseek-ai/dsh-agent-spine-demo'
+  config:
+    includeHarnessIdentity: false
+    includeRuntimeContext: false
+    persona: You are a technical solution research agent.
+    workspaceContext: false
+    skills:
+      enabled: false
+    toolBash: false
+    toolJobs: false
+
+- id: sessions
+  name: '@deepseek-ai/dsh-session-persistence-jsonl'
+  config:
+    root: !!js process.env.DSH_SESSION_ROOT ?? './.sessions'
+    compression: none

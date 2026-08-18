@@ -18,6 +18,9 @@
       "path": "../../boot/app-boot"
     },
     {
+      "path": "../../sdk/server"
+    },
+    {
       "path": "../../runtime-diagnostics/invariants"
     }
   ]

@@ -488,6 +488,23 @@ const SERVICE_ROLES: ServiceRole[] = [
     note: 'Search and fetch providers register into one ctx.web seam; tool-web owns the stable model-facing names.',
   },
   {
+    key: 'github',
+    pkg: 'github',
+    title: 'GitHub repository access registry',
+    mode: 'seam',
+    implementations: ['github-rest'],
+    consumers: ['tool-github'],
+    note: 'The REST provider supplies structured github.com facts; tool-github owns model-facing discovery and repository-read schemas.',
+  },
+  {
+    key: 'sdkJsonRpcIngress',
+    pkg: 'sdk-jsonrpc-server',
+    title: 'JSON-RPC request admission',
+    mode: 'core',
+    consumers: ['sdk-jsonrpc-demo'],
+    note: 'The server owns an idempotent ingress gate; the process host opens it only after the complete external Cordis configuration has settled.',
+  },
+  {
     key: 'spillStore',
     pkg: 'spill',
     title: 'Spill storage seam',

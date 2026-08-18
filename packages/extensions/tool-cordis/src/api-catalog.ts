@@ -642,6 +642,49 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'github',
+    summary: 'Structured GitHub capability registered as `ctx.github`.',
+    description: 'Structured GitHub capability registered as `ctx.github`.',
+    methods: [
+      {
+        signature: 'registerProvider(provider: GitHubProvider): () => void',
+        description: 'Register one provider for the contributing fiber\'s lifetime.',
+        parameters: [{ name: 'provider', description: 'provider keyed by its stable id.' }],
+        returns: 'a disposer that removes the provider.',
+      },
+      {
+        signature: 'async searchRepositories(request: GitHubRepositorySearchRequest, signal?: AbortSignal): Promise<GitHubRepositorySearchResult>',
+        description: 'Search through the sole available provider and enforce the requested result limit.',
+        parameters: [{ name: 'request', description: 'query and positive result limit.' }, { name: 'signal', description: 'optional cancellation signal.' }],
+        returns: 'repositories capped to `request.limit`.',
+      },
+      {
+        signature: 'readRepository(ref: GitHubRepositoryRef, signal?: AbortSignal): Promise<GitHubRepositoryReadResult>',
+        description: 'Read one repository through the sole available provider.',
+        parameters: [{ name: 'ref', description: 'repository owner and name.' }, { name: 'signal', description: 'optional cancellation signal.' }],
+        returns: 'repository facts and README availability.',
+      },
+      {
+        signature: 'resolveRevision(ref: GitHubRepositoryRef, signal?: AbortSignal): Promise<GitHubRepositoryRevision>',
+        description: 'Resolve a repository\'s default branch to an immutable commit.',
+        parameters: [{ name: 'ref', description: 'repository owner and name.' }, { name: 'signal', description: 'optional cancellation signal.' }],
+        returns: 'immutable commit identity and source URL.',
+      },
+      {
+        signature: 'listTree(ref: GitHubRepositoryRef, revision: string, signal?: AbortSignal): Promise<readonly GitHubRepositoryTreeEntry[]>',
+        description: 'List repository files at an immutable commit.',
+        parameters: [{ name: 'ref', description: 'repository owner and name.' }, { name: 'revision', description: 'immutable commit SHA.' }, { name: 'signal', description: 'optional cancellation signal.' }],
+        returns: 'the complete commit tree.',
+      },
+      {
+        signature: 'readFiles(request: GitHubRepositoryFilesRequest, signal?: AbortSignal): Promise<readonly GitHubRepositoryFile[]>',
+        description: 'Read a bounded batch of repository files at an immutable commit.',
+        parameters: [{ name: 'request', description: 'repository, revision, paths, and complete-result byte limit.' }, { name: 'signal', description: 'optional cancellation signal.' }],
+        returns: 'UTF-8 files whose combined content fits the requested limit.',
+      },
+    ],
+  },
+  {
     key: 'goals',
     summary: 'Goal service (`ctx.goals`) backed exclusively by the owning session log.',
     description: 'Goal service (`ctx.goals`) backed exclusively by the owning session log.',
@@ -1002,6 +1045,19 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         description: 'Read the session override without applying the deployment default.',
         parameters: [{ name: 'session', description: 'session whose log supplies the override.' }],
         returns: 'the last logged mode, or `undefined` without one.',
+      },
+    ],
+  },
+  {
+    key: 'sdkJsonRpcIngress',
+    summary: 'Host-owned admission control for the stdio JSON-RPC transport.',
+    description: 'Host-owned admission control for the stdio JSON-RPC transport.',
+    methods: [
+      {
+        signature: 'start(): void',
+        description: 'Begin reading requests. Idempotent while the plugin is active.',
+        parameters: [],
+        throws: ['when called through a retained handle after plugin disposal.'],
       },
     ],
   },
@@ -3100,6 +3156,50 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'GenericResultView',
     declaration: 'export interface GenericResultView {\n    card: \'generic\';\n    title?: string;\n    content?: ContentBlock[];\n}',
+  },
+  {
+    name: 'GitHubProvider',
+    declaration: 'export interface GitHubProvider {\n    readonly id: string;\n    available(): boolean;\n    searchRepositories(request: GitHubRepositorySearchRequest, signal?: AbortSignal): Promise<GitHubRepositorySearchResult>;\n    readRepository(ref: GitHubRepositoryRef, signal?: AbortSignal): Promise<GitHubRepositoryReadResult>;\n    resolveRevision?(ref: GitHubRepositoryRef, signal?: AbortSignal): Promise<GitHubRepositoryRevision>;\n    listTree?(ref: GitHubRepositoryRef, revision: string, signal?: AbortSignal): Promise<readonly GitHubRepositoryTreeEntry[]>;\n    readFiles?(request: GitHubRepositoryFilesRequest, signal?: AbortSignal): Promise<readonly GitHubRepositoryFile[]>;\n}',
+  },
+  {
+    name: 'GitHubReadme',
+    declaration: 'export type GitHubReadme = {\n    readonly kind: \'text\';\n    readonly content: string;\n    readonly url?: string;\n} | {\n    readonly kind: \'missing\';\n};',
+  },
+  {
+    name: 'GitHubRepository',
+    declaration: 'export interface GitHubRepository {\n    readonly ref: GitHubRepositoryRef;\n    readonly fullName: string;\n    readonly url: string;\n    readonly description?: string;\n    readonly stars: number;\n    readonly forks: number;\n    readonly openIssues: number;\n    readonly archived: boolean;\n    readonly defaultBranch: string;\n    readonly pushedAt?: string;\n    readonly topics: readonly string[];\n    readonly license?: string;\n    readonly primaryLanguage?: string;\n}',
+  },
+  {
+    name: 'GitHubRepositoryFile',
+    declaration: 'export interface GitHubRepositoryFile {\n    readonly path: string;\n    readonly content: string;\n    readonly sha: string;\n    readonly htmlUrl?: string;\n}',
+  },
+  {
+    name: 'GitHubRepositoryFilesRequest',
+    declaration: 'export interface GitHubRepositoryFilesRequest {\n    readonly ref: GitHubRepositoryRef;\n    readonly revision: string;\n    readonly paths: readonly string[];\n    readonly maxBytes: number;\n}',
+  },
+  {
+    name: 'GitHubRepositoryReadResult',
+    declaration: 'export interface GitHubRepositoryReadResult {\n    readonly repository: GitHubRepository;\n    readonly readme: GitHubReadme;\n    readonly observedAt: string;\n}',
+  },
+  {
+    name: 'GitHubRepositoryRef',
+    declaration: 'export interface GitHubRepositoryRef {\n    readonly owner: string;\n    readonly name: string;\n}',
+  },
+  {
+    name: 'GitHubRepositoryRevision',
+    declaration: 'export interface GitHubRepositoryRevision {\n    readonly sha: string;\n    readonly branch: string;\n    readonly url: string;\n}',
+  },
+  {
+    name: 'GitHubRepositorySearchRequest',
+    declaration: 'export interface GitHubRepositorySearchRequest {\n    readonly query: string;\n    readonly limit: number;\n}',
+  },
+  {
+    name: 'GitHubRepositorySearchResult',
+    declaration: 'export interface GitHubRepositorySearchResult {\n    readonly repositories: readonly GitHubRepository[];\n    readonly observedAt: string;\n    readonly truncated: boolean;\n}',
+  },
+  {
+    name: 'GitHubRepositoryTreeEntry',
+    declaration: 'export interface GitHubRepositoryTreeEntry {\n    readonly path: string;\n    readonly type: \'blob\' | \'tree\';\n    readonly sha: string;\n    readonly size?: number;\n}',
   },
   {
     name: 'GoalActivation',

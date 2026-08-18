@@ -406,24 +406,688 @@
     },
     "1-6-3": {
       "id": "1-6-3",
-      "label": "第一个实际项目立项：e2e 跑通后定，候选 ZBrain chat",
-      "status": "pending",
-      "mode": "explore",
+      "label": "技术方案调研分析 agent",
+      "status": "completed",
+      "mode": "exploit",
       "parent": "1-6",
+      "children": [
+        "1-6-3-1",
+        "1-6-3-2",
+        "1-6-3-3",
+        "1-6-3-4",
+        "1-6-3-5",
+        "1-6-3-6",
+        "1-6-3-7",
+        "1-6-3-8"
+      ],
+      "decisions": [
+        {
+          "q": "第一个实际项目选择什么主题？",
+          "answer": "技术方案调研分析 agent：接收主题或资料，从 GitHub 按 star 数与主题匹配度检索参考项目；以 Key-Value List 形成概念题纲，用 C4 + Mermaid 全景图和子主题图串联内容卡片，以各方案关键技术指标、口径定义和预期参考值收尾，输出结构化调研结果",
+          "note": "grilling Round 3 Q3；范围严格限定在 ZHarness"
+        },
+        {
+          "q": "首版任务是单次生成还是维护长期调研项目？",
+          "answer": "A：单次任务；每次接收主题或资料，独立完成一次调研并生成产物",
+          "note": "grilling Round 4 Q6；长期增量研究不进入首版"
+        },
+        {
+          "q": "最终产物的数据与呈现关系是什么？",
+          "answer": "Markdown 是 AI-readiness 的事实源；HTML 是 human-readiness 的派生产物，只能从 Markdown 渲染生成",
+          "note": "grilling Round 4 Q7；HTML 不形成可独立编辑的第二事实源"
+        },
+        {
+          "q": "如何处理路线图中的 ZBrain 候选记录？",
+          "answer": "节点改名为技术方案调研分析 agent，不建立 ZBrain 子节点，并删除受跨项目上下文污染的旧决策",
+          "note": "grilling Round 5 Q5；ZBrain 由独立 workspace 跟踪"
+        },
+        {
+          "q": "代码如何按仓库职责分层放置？",
+          "answer": "examples/tech-research-agent/ 保存 runnable cordis.yml、验收场景和产物示例；可复用实现进入正式 packages 分组；仅在需要共享预装配 bundle 时增加 packages/examples/*-demo",
+          "note": "grilling Round 5 Q8；修正先前 packages/examples/tech-research-agent/ 的错误路径建议"
+        },
+        {
+          "q": "SDK/JSON-RPC 与 ACP 按什么顺序验收？",
+          "answer": "先以 SDK/JSON-RPC 跑通首个切片，再复用同一 agent composition 增加 ACP 验收",
+          "note": "grilling Round 5 Q9；两个入口不放进同一个红绿循环"
+        },
+        {
+          "q": "GitHub 访问采用什么凭据策略？",
+          "answer": "可选 credential：配置 token 时使用认证请求，否则匿名访问；触发限流时明确失败，不降级为不可信网页搜索结果",
+          "note": "grilling Round 5 Q10"
+        },
+        {
+          "q": "首版允许读取哪些调研资料？",
+          "answer": "用户提供的主题和材料、GitHub API 仓库元数据及候选仓库 README；不抓取任意外部网站或项目文档站",
+          "note": "grilling Round 5 Q11；外部文档抓取需要独立安全切片"
+        },
+        {
+          "q": "Star 与主题匹配如何共同排序？",
+          "answer": "GitHub 搜索按 star 召回；根据名称、描述、topics 和 README 以 90–100 直接匹配、70–89 关键子问题、40–69 相邻参考、0–39 排除的口径评估主题匹配度；最终先按匹配度分档，再按 star 排序，并分别展示两个原始值",
+          "note": "grilling Round 6 Q12；不合成不透明总分"
+        },
+        {
+          "q": "首版调研预算是什么？",
+          "answer": "默认最多召回 30 个候选、深读 8 个仓库，不设固定最低 star；数量通过已验证配置调整，不写死在实现中",
+          "note": "grilling Round 6 Q13"
+        },
+        {
+          "q": "C4 与 Mermaid 分别表达什么？",
+          "answer": "全景图使用 C4 System Landscape；有仓库证据时用 C4 Context/Container 表达具体方案；概念分类、决策流程和指标关系使用 Mermaid flowchart/mindmap；不虚构来源无法支持的 Component 级结构",
+          "note": "grilling Round 6 Q14"
+        },
+        {
+          "q": "首版接受哪些输入？",
+          "answer": "自然语言主题、可选本地 .md/.txt 材料路径及可选输出目录；不读取任意 URL、PDF、Word 或二进制附件",
+          "note": "grilling Round 6 Q15"
+        },
+        {
+          "q": "Key-Value List 在报告中表示什么？",
+          "answer": "它是稳定概念索引：Key 为唯一概念名或标识，Value 包含一句定义、重要性和证据引用；项目卡片、方案章节、图节点和指标矩阵引用同一个 Key",
+          "note": "grilling Round 6 Q16；不是任意键值 JSON 或排版装饰"
+        },
+        {
+          "q": "报告如何保存事实来源？",
+          "answer": "项目事实和技术指标必须携带来源与观察时间；GitHub 数据记录仓库 URL 和抓取时间，用户材料记录本地路径，推断与来源事实分开，报告末尾生成来源清单",
+          "note": "grilling Round 6 Q17"
+        },
+        {
+          "q": "首版支持哪些 GitHub 主机？",
+          "answer": "只支持 github.com，不支持 GitHub Enterprise Server 自定义 baseURL",
+          "note": "grilling Round 7 Q18"
+        },
+        {
+          "q": "GitHub capability 提供什么最小接口？",
+          "answer": "packages/github/ 提供完整 Service Definition、REST Provider 和 Tool Consumer；接口只有 searchRepositories() 与 readRepository()，认证、分页、限流和响应解析由 Provider 隐藏；主题评分与报告字段不进入 GitHub 接口",
+          "note": "grilling Round 7 Q19；搜索返回结构化元数据，深读获取选中仓库 README"
+        },
+        {
+          "q": "主题匹配评分由谁完成？",
+          "answer": "agent 模型按 0–100 口径评分并为每个分数提供匹配证据；确定性代码只校验分数范围、档位和证据存在性",
+          "note": "grilling Round 7 Q20"
+        },
+        {
+          "q": "报告发布向模型暴露什么接口？",
+          "answer": "publish_research_report(markdown, outputPath) 统一校验必需章节、Key 引用和 Mermaid，写入 Markdown 事实源，确定性渲染并写入同名 HTML，返回两个产物位置",
+          "note": "grilling Round 7 Q21；不让模型分别编排通用 write 与转换脚本"
+        },
+        {
+          "q": "HTML 采用什么交付与安全规则？",
+          "answer": "生成可离线打开的单文件 HTML；不加载 CDN，内嵌固定版本 Mermaid runtime；忽略或转义 Markdown 原始 HTML，只允许安全链接协议，写入前校验 Mermaid，并使用严格安全模式",
+          "note": "grilling Round 7 Q22；接受每份报告约增加 3.4 MiB"
+        },
+        {
+          "q": "Markdown 报告必须包含哪些章节？",
+          "answer": "依次包含调研主题、输入材料与观察时间；Key-Value 概念索引；C4 System Landscape；候选项目表；深读项目卡片；方案族及适用场景对比；C4 Context/Container 或 Mermaid 子主题图；关键技术指标矩阵；建议、限制与待验证事项；来源清单。缺失必需章节时拒绝发布，HTML 不增加或改写内容",
+          "note": "grilling Round 8 Q23"
+        },
+        {
+          "q": "技术指标必须包含哪些字段？",
+          "answer": "每项指标包含指标名、口径定义和单位、测量方法、适用条件、来源观测值、预期值或参考区间、来源与观察时间、缺失数据和不确定性；预期值与实际观测值分开",
+          "note": "grilling Round 8 Q24"
+        },
+        {
+          "q": "报告文件如何命名和处理冲突？",
+          "answer": "默认生成 <outputDir>/<topic-slug>-<UTC timestamp>.md 及同名 .html；任一目标已存在时明确失败且不覆盖，调用方必须选择新路径",
+          "note": "grilling Round 8 Q25"
+        },
+        {
+          "q": "GitHub 错误如何影响任务？",
+          "answer": "搜索认证失败、限流、超时或 GitHub 故障时任务失败并给出可操作诊断；仓库缺少 README 时保留元数据卡片并标记证据缺口；单仓库暂时读取错误允许 agent 重试，重试后仍失败则记录缺口；诊断不包含 token",
+          "note": "grilling Round 8 Q27；限流诊断包含重置时间"
+        },
+        {
+          "q": "按什么切片实施和验收？",
+          "answer": "依次完成 runnable 骨架与 SDK/JSON-RPC 最小 turn；GitHub capability、REST Provider 和 Tool Consumer；报告校验、Markdown 写入和离线 HTML；agent prompt、评分流程及完整 keyless snapshot；真实 DeepSeek + GitHub e2e；复用 composition 增加 ACP 验收。每个切片按 TDD 推进，非平凡行为同步 README、JSDoc、架构文档和 Agent Note",
+          "note": "grilling Round 8 Q28"
+        },
+        {
+          "q": "报告发布失败时保留什么？",
+          "answer": "先在内存完成 Markdown 结构、引用、Mermaid 校验和 HTML 渲染；全部通过后依次写 Markdown 与 HTML。HTML 写入失败时保留 Markdown，并返回部分失败和 Markdown 路径；校验或渲染失败时不写文件",
+          "note": "grilling Round 8 Q26；不把两个远程文件写入声明为原子事务"
+        }
+      ],
+      "notes": "共享设计已确认；按 TDD 纵向切片实施。测试 seam：SDK/JSON-RPC runnable、ctx.github、publish_research_report、ACP。"
+    },
+    "1-6-3-1": {
+      "id": "1-6-3-1",
+      "label": "SDK/JSON-RPC runnable 最小 turn",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-6-3",
+      "children": [],
+      "decisions": [],
+      "notes": "keyless smoke 通过真实 Loader + SDK/JSON-RPC 完成最小 turn；观察 user/message、assistant/message、turn/end。"
+    },
+    "1-6-3-2": {
+      "id": "1-6-3-2",
+      "label": "GitHub capability、REST Provider 与 Tool Consumer",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-6-3",
+      "children": [],
+      "decisions": [],
+      "notes": "GitHub Service Definition、github.com REST Provider、模型工具 Consumer 与 SDK/JSON-RPC assembled request 已实现；公开 seam 测试覆盖搜索、README、错误分类、取消/超时和 fiber disposal。"
+    },
+    "1-6-3-3": {
+      "id": "1-6-3-3",
+      "label": "Markdown 报告发布与离线 HTML 派生",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-6-3",
       "children": [],
       "decisions": [
         {
-          "q": "第一个项目何时定",
-          "answer": "e2e 跑通后定，若 ZBrain 意向明确则 e2e 验证点向它倾斜",
-          "note": "避免过早收敛；grilling Round1 Q3"
+          "q": "Key-Value 概念索引采用什么可校验语法？",
+          "answer": "索引项用 - Key: `identifier` 声明；正文以 [[identifier]] 引用；发布器拒绝重复 Key、未定义引用和从未被正文引用的 Key",
+          "note": "该语法稳定、易于模型生成和确定性校验，HTML 保留同一文本"
         }
       ],
-      "notes": ""
+      "notes": "publish_research_report 在内存中校验必需章节顺序、Key 引用、链接协议与 Mermaid 后才写入；双目标拒绝覆盖并防竞争写；HTML 失败保留 Markdown 并返回稳定错误码和路径。"
+    },
+    "1-6-3-4": {
+      "id": "1-6-3-4",
+      "label": "技术方案调研评分流程与 keyless snapshot",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-6-3",
+      "children": [],
+      "decisions": [],
+      "notes": "共享 research-policy 固化匹配度分档、证据纪律、C4/Mermaid 与指标口径；keyless snapshot 通过真实 SDK/JSON-RPC runtime、GitHub fixture provider 和三个真实工具完成搜索、深读、发布。"
+    },
+    "1-6-3-5": {
+      "id": "1-6-3-5",
+      "label": "真实 DeepSeek 与 GitHub 端到端验收",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-6-3",
+      "children": [],
+      "decisions": [],
+      "notes": "真实 DeepSeek + github.com 匿名 API 端到端通过：精确仓库搜索、README 深读、Markdown/HTML 发布及三个工具的 session 证据均验证。"
+    },
+    "1-6-3-6": {
+      "id": "1-6-3-6",
+      "label": "ACP 入口与端到端验收",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-6-3",
+      "children": [],
+      "decisions": [],
+      "notes": "ACP composition 与 keyless e2e 通过真实 stdio ACP 客户端、模型请求和 publish_research_report 世界状态验收。"
+    },
+    "1-6-3-7": {
+      "id": "1-6-3-7",
+      "label": "双语文档、Agent Note 与发布门禁收口",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-6-3",
+      "children": [],
+      "decisions": [],
+      "notes": "已补齐 GitHub/research/example 双语 README、GitHub 子系统类型参考、架构与生成目录、implemented Agent Note；相关 pair、catalog、type-equiv、预算、lint、typecheck、knip、publint、package invariants、Cordis config、NodeNext、runtime closure、单元测试、JSON-RPC snapshot 与 keyless smoke 通过。doc-sync 28 项中 24 项通过；其余 4 项由既有 docs/zj 文档的硬换行/不可编译围栏/缺少双语对侧、根 README pairing 记录和既有 .gitlab-ci.yml 失效链接阻断。"
+    },
+    "1-6-3-8": {
+      "id": "1-6-3-8",
+      "label": "真实议题验证后的调研 Agent 稳定性、可观测性与双路线对比迭代",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-6-3",
+      "children": [
+        "1-6-3-8-1",
+        "1-6-3-8-2",
+        "1-6-3-8-3"
+      ],
+      "decisions": [
+        {
+          "q": "本轮迭代由哪些问题驱动？",
+          "answer": "稳定性深层改进、Agent 健康可观测性、与 skill 报告的证据化对比",
+          "note": "用户明确提出；当前仍处于 grilling 共享理解阶段，未决定具体实现。"
+        },
+        {
+          "q": "Agent 路线与 skill 路线采用什么目标关系？",
+          "answer": "共享研究内核，保留不同执行入口",
+          "note": "共同拥有证据采集、研究中间表示、评分、指标定义与报告校验；Agent 与 skill 保留各自编排优势。"
+        },
+        {
+          "q": "施工如何切片？",
+          "answer": "五个依赖有序的纵向切片：契约与canonical source、DeepWiki与Evidence Compiler、Report事务与回执、Health-Eval-CLI、ZAgentic adapters与双赛道复跑",
+          "note": "每个切片独立验收并覆盖真实 runnable snapshot。"
+        },
+        {
+          "q": "本轮迭代何时完成？",
+          "answer": "同一真实议题通过受控双赛道硬门槛，原生双赛道完成盲评，健康与成本可查询，旧问题不可复现",
+          "note": "单元测试或单次成功均不足以证明完成。"
+        }
+      ],
+      "notes": "Grilling frontier 已闭合，等待 Human 明确确认共享理解后施工。五切片：1契约+GitHub canonical source+heuristic Evidence Compiler；2 DeepWiki navigation+adaptive gap loop+cache；3 Report IR prepare/commit+verified receipt；4 health projection+fixtures+nightly eval+standalone CLI；5 ZAgentic skill migration/adapters+同题双赛道复跑。"
+    },
+    "1-6-3-8-1": {
+      "id": "1-6-3-8-1",
+      "label": "真实运行问题的深层根因与高稳定性改进",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-6-3-8",
+      "children": [
+        "1-6-3-8-1-1",
+        "1-6-3-8-1-2"
+      ],
+      "decisions": [
+        {
+          "q": "正确性、研究深度、运行成本如何排序？",
+          "answer": "正确性与证据一致性为硬门槛，研究深度其次，时延和成本作为预算约束",
+          "note": "事实、自述或执行轨迹不一致时不得判为健康。"
+        },
+        {
+          "q": "内部与发布事实源如何分层？",
+          "answer": "内部以证据账本与 ResearchReport IR 为构造事实，发布后 Markdown 仍为对外 AI-readiness 事实源",
+          "note": "HTML 继续由 Markdown 确定性派生。"
+        },
+        {
+          "q": "GitHub 深读能力采用什么基线？",
+          "answer": "暂以 commit-pinned tree 与受限批量文件读取为自有基线，同时重新比较 DeepWiki 等外部仓库理解服务",
+          "note": "用户接受推荐但要求单独讨论是否存在优于选项 C 的技术方案，因此本决策尚未冻结。"
+        },
+        {
+          "q": "报告发布如何保证物理调用恰好一次？",
+          "answer": "prepare/validate 可重试，validation token/hash 驱动单次 publish 状态转换",
+          "note": "publish 只允许 validated 到 published。"
+        },
+        {
+          "q": "研究评分是否生成综合总分？",
+          "answer": "多轴并列且不生成伪精确总分，推荐由显式决策规则产生",
+          "note": "主题匹配、方案角色、能力覆盖、企业成熟度、证据置信度分离；unknown 不等于 fail。"
+        },
+        {
+          "q": "DeepWiki 在深读链路中承担什么信任角色？",
+          "answer": "只作为结构发现、问题回答和候选文件加速层",
+          "note": "关键事实必须回到 commit-pinned 原文件验证。"
+        },
+        {
+          "q": "DeepWiki 索引与目标 revision 不一致时如何处理？",
+          "answer": "仍可用于导航，但不能作为当前版本证据",
+          "note": "记录 indexedRevision、targetRevision 与 freshness 状态。"
+        },
+        {
+          "q": "仓库理解能力的 seam 放在哪里？",
+          "answer": "建立 provider-neutral Repository Intelligence/Discovery seam，不塞进 GitHub REST capability",
+          "note": "GitHub 权威事实与仓库语义理解的可信度及生命周期不同。"
+        },
+        {
+          "q": "DeepWiki 不可用时如何降级？",
+          "answer": "降级到 tree + 确定性规则发现 + bounded file read，并记录健康降级",
+          "note": "外部语义服务不成为正确性单点。"
+        },
+        {
+          "q": "首轮是否建设本地重型语义索引？",
+          "answer": "先冻结 Repository Intelligence 接口，实现 DeepWiki 与确定性 heuristic 两个 adapter，不建设重型索引",
+          "note": "以真实收益数据决定后续 embeddings/code graph 投入。"
+        },
+        {
+          "q": "DeepWiki 结果如何进入 Evidence Ledger？",
+          "answer": "作为 derived_hint 保存，不得单独支撑关键 claim",
+          "note": "保留导航贡献以评估召回收益。"
+        },
+        {
+          "q": "私有仓库如何使用外部语义导航？",
+          "answer": "默认禁用 true-external navigation，只有显式配置、凭据和数据政策允许时启用",
+          "note": "私有仓库默认 heuristic + canonical source。"
+        },
+        {
+          "q": "旧 GitHub README 工具和 Markdown publisher 如何兼容？",
+          "answer": "新垂直链路完成后直接替换并更新全部引用，不保留兼容层",
+          "note": "遵循 pre-release foundation over blast radius。"
+        }
+      ],
+      "notes": "根因不是单一 prompt：模型同时承担结构生成、事实评分、发布校验与执行自述。DeepWiki 调查：公共 MCP 免认证且擅长结构导航/问答；网页有 indexed commit 与行级链接，但 MCP 不返回 commit SHA 且部分引用 href 为空；DSH 索引实测落后 HEAD 约4天，完整 wiki 约466KB/7265行且无分页/byte预算；私有仓库需 Devin MCP/API。结论倾向 DeepWiki 作为发现加速层，自有 commit-pinned 读取作为权威证据层，待 Human 决策。"
+    },
+    "1-6-3-8-2": {
+      "id": "1-6-3-8-2",
+      "label": "调研 Agent 健康状态的可观测指标与判定机制",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-6-3-8",
+      "children": [
+        "1-6-3-8-2-1"
+      ],
+      "decisions": [
+        {
+          "q": "健康判定覆盖哪些层级？",
+          "answer": "单次运行健康结果与滚动 SLO 同时覆盖",
+          "note": "硬问题阻止交付；软问题告警并降低置信度。"
+        },
+        {
+          "q": "健康指标的数据归属如何划分？",
+          "answer": "复用 core session projections，只新增不可推导的 research domain events 与 manifest",
+          "note": "避免重复 telemetry 和长期正则解析。"
+        },
+        {
+          "q": "哪些健康问题阻止交付？",
+          "answer": "正确性问题硬阻断，覆盖度、时延和成本先告警",
+          "note": "积累基线后再将部分质量和效率指标升级为 SLO。"
+        }
+      ],
+      "notes": "现有 durable session events 可计算运行、工具和 token 指标，但示例未挂 projection/stats/token-meter/telemetry。真实基线：354665ms、6 steps、7/7 GitHub 成功、publish 1/3 成功、纠错消耗 22208 output tokens（44.3%）。研究质量需 versioned domain manifest/evaluator。"
+    },
+    "1-6-3-8-3": {
+      "id": "1-6-3-8-3",
+      "label": "Agent 报告与 skill 报告的证据化优缺点对比",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-6-3-8",
+      "children": [
+        "1-6-3-8-3-1"
+      ],
+      "decisions": [
+        {
+          "q": "Agent 与 skill 如何公平比较？",
+          "answer": "双赛道：受控对照与原生最佳表现",
+          "note": "受控赛道比较相同资源下的稳定性；原生赛道比较真实使用价值。"
+        },
+        {
+          "q": "研究来源如何分级治理？",
+          "answer": "区分官方代码或文档、官方声明、第三方实测、二手解读",
+          "note": "关键能力与采用结论必须有一级或二级来源，二手解读不得冒充官方事实。"
+        },
+        {
+          "q": "受控对照统一哪些条件？",
+          "answer": "统一 ResearchBrief、仓库集合、文件权限、模型、token与时间预算、输出 IR，只允许编排方式不同",
+          "note": "原生赛道解除限制比较各自最佳真实价值。"
+        }
+      ],
+      "notes": "Agent 胜在横向召回、固定结构、observed/expected 与完整 trace；skill 胜在多文件深读、claim-level 引用和可执行 PoC。两者自述一致性均失败：Agent 错报 publish/图数；skill 错报引用数/官方来源纯度。采用受控与原生双赛道。"
+    },
+    "1-6-3-8-1-1": {
+      "id": "1-6-3-8-1-1",
+      "label": "仓库深读模块的深接口与可演化 adapter 设计",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-6-3-8-1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "Evidence Compiler 的外部接口处理什么颗粒度？",
+          "answer": "一次处理完整多仓库 ResearchBrief 与统一判据",
+          "note": "跨仓库判据一致性和预算分配由深模块负责。"
+        },
+        {
+          "q": "研究 preset 是否同时暴露原始文件读取工具？",
+          "answer": "只开放 Evidence Compiler；原始读取保留给调试或其他 preset",
+          "note": "避免模型绕过 revision、预算和证据规则。"
+        },
+        {
+          "q": "自适应证据循环由谁控制？",
+          "answer": "代码控制预算、顺序和终止；模型只在类型化接口内提出 inquiry 与候选线索",
+          "note": "语义判断与确定性控制分工。"
+        },
+        {
+          "q": "何时建立通用 Repository Source seam？",
+          "answer": "先扩展 ctx.github，第二种真实 source 出现后再提取通用 seam",
+          "note": "避免只有一个生产 adapter 的假抽象。"
+        },
+        {
+          "q": "证据如何跨运行复用？",
+          "answer": "按 repository revision、normalized brief、policy version 缓存 sealed ledger",
+          "note": "不缓存未经验证的 DeepWiki 自然语言结论。"
+        },
+        {
+          "q": "证据收集何时停止？",
+          "answer": "所有 critical criteria 已覆盖，或预算/期限耗尽",
+          "note": "文件数只是资源上限。"
+        },
+        {
+          "q": "未找到能力时如何形成否定结论？",
+          "answer": "仅在原文明示否定或完成预定义穷尽检查时可否定，否则为 unknown",
+          "note": "防止 README-only 缺失被误报为能力不存在。"
+        },
+        {
+          "q": "DeepWiki 真实 transport 如何接入而不扩大模型权限？",
+          "answer": "使用内部 Streamable HTTP MCP client，仅向 Evidence Compiler 返回路径提示；按精确 repository allowlist 放行",
+          "note": "DeepWiki 工具不注册到 ctx.tools；失败进入 navigation diagnostic 并回退 heuristic。"
+        },
+        {
+          "q": "主题驱动候选发现如何稳定排序？",
+          "answer": "GitHub search 取得按 stars 排序的候选集，再计算独立 topicMatch，按 topicMatch、stars、仓库名确定性排序",
+          "note": "Ledger 同时封存 stars、topicMatch 与 origin；Report IR 不得改写两条评分轴。"
+        },
+        {
+          "q": "首版 ledger cache 的实际持久化范围？",
+          "answer": "先提供 runtime 进程内 cache port 和实现；standalone 跨进程 on-disk cache 继续保留为未完成项",
+          "note": "Cache key 已按 revision、normalized brief、policy version；on-disk 信任边界需要完整 schema validation 后再启用。"
+        }
+      ],
+      "notes": "设计闭合：ResearchBrief→resolve(spec)→collect→VerifiedEvidenceLedger；多仓库×统一判据；Navigation 为 DeepWiki+heuristic internal seam；权威读取先扩展 ctx.github；自适应 gap loop；revision/brief/policy keyed cache；critical coverage 或预算耗尽停止；否定结论需明确否定证据或穷尽检查。"
+    },
+    "1-6-3-8-1-2": {
+      "id": "1-6-3-8-1-2",
+      "label": "ResearchReport IR、prepare-commit 发布事务与确定性事实回执",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-6-3-8-1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "模型如何提交报告内容？",
+          "answer": "一次提交完整类型化 Report IR，由 prepare 确定性编译和校验",
+          "note": "不引入跨调用可变草稿状态。"
+        },
+        {
+          "q": "Report IR 如何绑定证据？",
+          "answer": "每个关键 claim 引用 Evidence ID，推荐引用 claim，critical claim 无证据则 prepare 失败",
+          "note": "形成 Evidence→Claim→Comparison→Recommendation 可机械追踪链。"
+        },
+        {
+          "q": "最终执行回执由谁生成？",
+          "answer": "应用从 session log、sealed ledger 和 publication receipt 确定性投影",
+          "note": "模型不再自述调用次数、计数、hash、路径、耗时、token 或健康状态。"
+        },
+        {
+          "q": "两种报告体裁如何共存？",
+          "answer": "共享语义 Report IR，并以 reportFamily/version 显式投影 technical-c4/v1 与 zj-draft/v1",
+          "note": "受控赛道使用同一 family，原生赛道保留各自体裁。"
+        },
+        {
+          "q": "内部审计产物是否持久保存？",
+          "answer": "保存 versioned ledger、Report IR 与 publication manifest，Markdown 仍为对外报告事实源",
+          "note": "内部 JSON 用于重放、评测和审计。"
+        },
+        {
+          "q": "切片 1 的实现落点是什么？",
+          "answer": "新增 @deepseek-ai/dsh-research 作为 versioned Brief/Ledger/Report IR 内核；扩展 ctx.github 提供 revision/tree/bounded files canonical reads",
+          "note": "缺证据保持 unknown；所有文件证据固定到 commit SHA；完整 batch 受字节预算约束。"
+        }
+      ],
+      "notes": "Report IR 双 family、Evidence 引用校验、sealed candidate 评分校验、prepare token、single publish、Markdown authoritative/HTML derived、verified receipt 已实现并通过 focused tests。"
+    },
+    "1-6-3-8-2-1": {
+      "id": "1-6-3-8-2-1",
+      "label": "调研运行健康投影、门槛与分层稳定性评测",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-6-3-8-2",
+      "children": [],
+      "decisions": [
+        {
+          "q": "单次健康结果如何暴露？",
+          "answer": "durable research/evaluation-completed 事实由统一 projection 暴露到 SDK、最终回执和低基数 OTel metrics",
+          "note": "metrics 不携带 prompt、源码或报告正文。"
+        },
+        {
+          "q": "首版健康门槛如何设置？",
+          "answer": "正确性不变量立即要求100%，效率指标积累至少30次同类运行后再设统计阈值",
+          "note": "时延与成本先形成基线。"
+        },
+        {
+          "q": "稳定性评测如何分层？",
+          "answer": "每PR确定性对抗fixture、nightly固定真实题库重复运行、里程碑原生双路线盲评",
+          "note": "分别证明机制正确、模型稳定和真实使用价值。"
+        },
+        {
+          "q": "报告质量由谁评判？",
+          "answer": "确定性规则阻断、盲人工评审洞察价值、LLM judge先作为非阻断信号",
+          "note": "LLM judge 经校准后才能升级。"
+        },
+        {
+          "q": "publishExactlyOnce 与 receiptConsistent 如何避免自证？",
+          "answer": "由 application publication facts 计算，projection 同时保留 publishCount 与 latestReceipt",
+          "note": "不再在 evaluator 中硬编码 publishExactlyOnce=true；低基数 metric points 不含仓库、prompt、源码或报告正文。"
+        },
+        {
+          "q": "跨进程证据缓存的持久化与损坏语义是什么？",
+          "answer": "standalone CLI 默认使用 DSH_HOME/cache/research/v1；每项按 cache key 单文件原子发布，读取时完整校验 ledger schema，损坏或非普通文件 loud fail",
+          "note": "进程内 compiler 仍通过 ResearchEvidenceCache port 注入；磁盘实现不静默删除或忽略损坏证据。"
+        },
+        {
+          "q": "Evidence Compiler 的 deadline 如何进入事实语义？",
+          "answer": "ResearchBrief budget 增加显式 deadlineMs 并由 resolve 物化默认值；期限耗尽停止后续 canonical reads，将未覆盖准则保留为 unknown 并记录 compiler deadline diagnostic",
+          "note": "deadline 不得把缺失证据解释为否定能力；上游 provider 自身 timeout 仍按原错误语义处理。"
+        },
+        {
+          "q": "多仓库运行如何避免全局预算被首仓库耗尽？",
+          "answer": "文件和字节预算按剩余仓库数动态 fair-share；每个仓库只能消费其确定性份额，未使用份额由后续仓库继承",
+          "note": "真实三仓库运行中首仓库耗尽30个文件，导致后两仓库10个 criterion 全部 unknown；cache identity 同时加入 compiler cache version，旧偏置 ledger 不再命中。"
+        },
+        {
+          "q": "zj-draft 的来源清单如何兼顾审计完整性与人类可读性？",
+          "answer": "sealed ledger 保留全部证据；Markdown 只投影 claims 实际引用的证据，按 ledger 顺序去重并连续编号",
+          "note": "报告重排不会改变共同证据的相对编号；未引用证据仍可通过 sealed ledger 审计。"
+        },
+        {
+          "q": "skill 路线如何从权威 Markdown 派生 HTML？",
+          "answer": "standalone CLI 新增 versioned render-html operation，接收 report family 与最终 Markdown，按 family 契约校验后返回单文件 HTML",
+          "note": "ZAgentic 不调用未版本化内部 API；evaluate 仅消费 skill 实际落盘后的 Markdown/HTML publication facts。"
+        },
+        {
+          "q": "离线 HTML 何时内嵌 Mermaid runtime？",
+          "answer": "仅当最终 Markdown 含 Mermaid fence 时内嵌；无图的 zj-draft 输出纯静态 HTML",
+          "note": "真实 v2 报告无 Mermaid 仍达到 3.57MB，条件内嵌不改变事实源或技术 C4 离线能力。"
+        }
+      ],
+      "notes": "已实现 durable health projection、六项100% correctness、低基数 OTel、30样本效率门槛、跨进程 cache、deadline、fair-share、正文引用证据投影、family-aware HTML CLI 与 skill create-if-absent publisher；真实三仓库报告 healthy=true。"
+    },
+    "1-6-3-8-3-1": {
+      "id": "1-6-3-8-3-1",
+      "label": "Agent 与 skill 共享研究内核的适配与双赛道协议",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-6-3-8-3",
+      "children": [],
+      "decisions": [
+        {
+          "q": "skill 路线如何接入共享内核？",
+          "answer": "skill 与 Agent 都调用 Evidence Compiler 和 Report Compiler，保留各自编排与交互流程",
+          "note": "受控赛道共享事实和输出语义，原生赛道保留各自优势。"
+        },
+        {
+          "q": "skill 调用共享内核采用什么入口？",
+          "answer": "版本化 CLI，通过 stdin/stdout 传 JSON，内部装配相同 Cordis 模块",
+          "note": "避免嵌套 Agent、宿主绑定和 workspace source import。"
+        },
+        {
+          "q": "两个 skill 的长期 source of record 在哪里？",
+          "answer": "统一迁入 GitHub 仓库 jununfly/ZAgentic；.codex 与 .workbuddy 仅为安装投影",
+          "note": "zj-research 已在 ZAgentic，zj-research-report 从临时 WorkBuddy 目录迁入；compiler 分发细节待下一轮决定。"
+        },
+        {
+          "q": "zj-research-report 在 ZAgentic 中放在哪里？",
+          "answer": "skills/engineering/zj-research-report，与 zj-research 同 bucket",
+          "note": "无需新建 research bucket。"
+        },
+        {
+          "q": "ZAgentic skills 如何投影到运行时目录？",
+          "answer": "复用 scripts/link-skills.sh，跨设备默认 copy，本地开发可 symlink",
+          "note": "Git 仓库是 source of record，运行目录是可替换快照。"
+        },
+        {
+          "q": "compiler 如何跨设备分发？",
+          "answer": "ZHarness 产出版本化 standalone CLI artifact，ZAgentic 声明支持版本范围",
+          "note": "开发期可通过显式 ZJ_RESEARCH_CLI 指向本地构建。"
+        },
+        {
+          "q": "compiler 缺失或版本不兼容时如何处理？",
+          "answer": "明确失败并指向 ZAgentic setup 文档，不静默降级",
+          "note": "轻量模式如有需要必须显式命名。"
+        },
+        {
+          "q": "跨仓库协议兼容如何验证？",
+          "answer": "ZHarness 拥有 JSON Schema 与 golden contract fixtures，ZAgentic CI 使用支持版本运行 fixtures",
+          "note": "所有内部产物携带 schema、policy、compiler version。"
+        },
+        {
+          "q": "跨仓库发布顺序是什么？",
+          "answer": "ZHarness 发布 CLI，再升级 ZAgentic skill adapters，安装投影后执行双赛道复跑",
+          "note": "producer 先于 consumer，避免假设跨仓库原子提交。"
+        },
+        {
+          "q": "真实 Agent 如何避免 provider 的 256k 默认输出预算吞噬整次运行？",
+          "answer": "技术调研组合在 cordis.yml 的模型目录项显式声明 maxTokens: 8192，并用 keyless 组装测试断言实际请求上限",
+          "note": "输出预算属于部署可调参数；Vitest timeout 只判定测试超时，不能替代模型请求预算。"
+        },
+        {
+          "q": "SDK handshake 如何保证完整 composition 已就绪？",
+          "answer": "JSON-RPC server 仅注册幂等 sdkJsonRpcIngress.start；通用 bin 在 app boot 完整收敛后显式开放 stdin ingress",
+          "note": "不使用 sleep；配置不含 server 时 bin 仍合法且不提供服务。"
+        },
+        {
+          "q": "Report Compiler 如何稳定取得 sealed ledger？",
+          "answer": "Evidence Compiler 将 ledger 作为 research/evidence-collected durable event 写入当前 session；prepare 仅接收完整 Report IR 与 outputPath，并读取最近 ledger",
+          "note": "模型仍看到 ledger 以构建引用，但无需在后续工具调用中重新生成大对象；缺少 ledger 时 prepare 返回结构化诊断。"
+        },
+        {
+          "q": "zj-draft 的跨 Markdown/HTML 引用协议是什么？",
+          "answer": "使用普通内联引用链接与可见编号来源清单，不依赖当前 marked 未支持的脚注语法",
+          "note": "skill 真实产物暴露了编码 href 与空 Source list；编译器和 HTML 契约测试固定相同目标。"
+        },
+        {
+          "q": "skill adapter 与 publisher 如何有界失败？",
+          "answer": "adapter 进程默认 300 秒且支持显式环境覆盖；publisher 在任何文件 effect 前完成健康评估并预检 Markdown、HTML、receipt 三个目标",
+          "note": "golden contract 覆盖健康发布、不健康零产物与非法 timeout。"
+        },
+        {
+          "q": "Agent 如何读取 sealed ledger 而不触发上下文爆炸？",
+          "answer": "完整 ledger 只进入 durable session；模型收到不含 tree、每仓库/判据至多一条 evidence 的 zj-research-evidence-digest/v1",
+          "note": "真实运行从 827,414 input tokens 与 397 条 evidence 定位根因。"
+        },
+        {
+          "q": "JSON-RPC ingress 在 capability 图中如何分类？",
+          "answer": "作为 sdk-jsonrpc-server 所有、sdk-jsonrpc-demo 消费的 core admission service；它控制宿主启动时序，不是可替换 provider seam。",
+          "note": "生成器完整性检查发现新增 ctx service 尚未分类。"
+        },
+        {
+          "q": "无界 ledger 改为 digest 后，跨传输测试和调用方如何避免漂移？",
+          "answer": "把 zj-research-evidence-digest/v1 提升为共享 ResearchEvidenceDigest 类型；ACP 与其他调用方消费该类型，并对 Error: 工具结果立即失败。",
+          "note": "ACP e2e 仍按 VerifiedEvidenceLedger 读取结果，导致 ledgerFingerprint 丢失、prepare schema 拒绝后重试超时。"
+        },
+        {
+          "q": "上游 GitHub rate limit 如何避免演变成 Agent 重试风暴？",
+          "answer": "技术调研组合加载 repeat-tool-reminder，仅跟踪 research_collect_evidence，并在第 2、3、5 次相同调用注入升级提醒；保留原始工具错误用于审计。",
+          "note": "第三次真实运行在明确 reset time 前连续重试同一 brief 22 次；运行已终止且未产生半成品。"
+        },
+        {
+          "q": "版本化 research CLI 如何进入可发布构建？",
+          "answer": "包级 tsdown 显式构建 index、invariant 与 bin，发布白名单包含 lib/bin.js",
+          "note": "根构建默认不打包 bin；constraints 与 publint 共同验证声明和产物。"
+        },
+        {
+          "q": "bounded digest 稳定后技术调研组合的模型输出上限如何设置？",
+          "answer": "从 8192 提升为 32768，并要求模型直接提交 Report IR 工具参数，不先在推理或正文中复写完整对象",
+          "note": "真实第二轮在 8192 output tokens 截断，其中 reasoning 7803，未产生 prepare 调用；keyless 组装测试固定新上限。"
+        },
+        {
+          "q": "Agent 与 skill 的公平 A/B 如何保证结论可比？",
+          "answer": "两条赛道必须消费同一份版本化 zj-research-brief/v1，固定 criteria、keywords、critical 与 budget",
+          "note": "同一技术问题仍产生 Pi 组合方案与 DSH 组织底座两种结论；compiler 保证证据自洽，不定义效用函数。"
+        },
+        {
+          "q": "GitHub rate limit 如何确定性终止重试风暴？",
+          "answer": "技术调研应用策略在首次 GITHUB_RATE_LIMITED 结果后以 hook cause 取消当前 turn，保留原始错误与 retry-after，等待用户在后续 turn 重试",
+          "note": "真实匿名配额回归仅调用 collect 一次，tool/result 后以 aborted turn/end 结束；预算参数变化无法绕过。"
+        }
+      ],
+      "notes": "已完成 Agent/skill 共享 ResearchBrief、Evidence Compiler、Report Compiler、版本化 standalone CLI 与双赛道协议；ZAgentic 是 skill source of record，运行目录仅为投影。真实 Agent 已发布 Markdown/离线 HTML，正式对比报告已落盘；bounded digest、32768 输出预算、Report IR 直接提交和 GitHub rate-limit 单次失败终止已验证。聚焦单元、keyless JSON-RPC、ACP、research-flow snapshot、knip、constraints、publint、lint/build、Cordis catalog、doc refs、命名双语配对与 diff check 通过。完整 doc-sync 25/28；剩余 doc-typecheck、markdown wrap、translation pairing 均来自既有 docs/zj 基线，未扩大处理。"
     }
   },
   "metadata": {
     "created": "2026-08-15 11:25:33",
-    "updated": "2026-08-17 14:17:51",
+    "updated": "2026-08-18 21:24:48",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZHarness/docs/zj/learning_roadmap.md"
   }
 }

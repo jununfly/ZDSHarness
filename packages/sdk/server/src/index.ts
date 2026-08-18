@@ -21,6 +21,22 @@ export const name = 'sdk-jsonrpc-server'
 // Only the agent factory is required; initialize reads the optional LLM seam with ctx.get().
 export const inject = ['agents']
 
+/** Host-owned admission control for the stdio JSON-RPC transport. */
+export interface JsonRpcIngress {
+  /**
+   * Begin reading requests. Idempotent while the plugin is active.
+   * @throws when called through a retained handle after plugin disposal.
+   */
+  start(): void
+}
+
+declare module '@deepseek-ai/cordis' {
+  interface Context {
+    /** JSON-RPC admission control supplied when this server plugin is mounted. */
+    sdkJsonRpcIngress: JsonRpcIngress
+  }
+}
+
 /** JSON-RPC deployment config plus runtime-only test hooks. */
 export interface JsonRpcConfig {
   /** Report max-token turn/subagent termination as a successful SDK result. */
@@ -60,6 +76,17 @@ export function apply(ctx: Context, config: JsonRpcConfig): void {
   const server = new HarnessSdkJsonRpcServer(ctx, transport, {
     maxTokensAsSuccess: resolvedConfig.maxTokensAsSuccess,
   })
+  let started = false
+  let disposed = false
+
+  ctx.provide('sdkJsonRpcIngress', Object.freeze({
+    start(): void {
+      if (disposed) throw new Error('JSON-RPC ingress is disposed')
+      if (started) return
+      started = true
+      transport.start()
+    },
+  }))
 
   // Share one exit task so racing shutdown requests cannot dispose the root or
   // exit the process more than once.
@@ -83,8 +110,8 @@ export function apply(ctx: Context, config: JsonRpcConfig): void {
   })
 
   ctx.effect(() => {
-    transport.start()
     return async () => {
+      disposed = true
       await server.shutdown()
       transport.close()
     }

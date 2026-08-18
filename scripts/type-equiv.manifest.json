@@ -1924,6 +1924,86 @@
       "doc": "docs/subsystems/feedback.md",
       "symbol": "MessageFeedbackDeleteResult",
       "source": "packages/feedback/message-feedback/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/github.md",
+      "symbol": "GitHubRepositoryRef",
+      "source": "packages/github/github/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/github.md",
+      "symbol": "GitHubRepository",
+      "source": "packages/github/github/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/github.md",
+      "symbol": "GitHubRepositorySearchRequest",
+      "source": "packages/github/github/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/github.md",
+      "symbol": "GitHubRepositorySearchResult",
+      "source": "packages/github/github/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/github.md",
+      "symbol": "GitHubReadme",
+      "source": "packages/github/github/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/github.md",
+      "symbol": "GitHubRepositoryReadResult",
+      "source": "packages/github/github/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/github.md",
+      "symbol": "GitHubRepositoryRevision",
+      "source": "packages/github/github/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/github.md",
+      "symbol": "GitHubRepositoryTreeEntry",
+      "source": "packages/github/github/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/github.md",
+      "symbol": "GitHubRepositoryFile",
+      "source": "packages/github/github/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/github.md",
+      "symbol": "GitHubRepositoryFilesRequest",
+      "source": "packages/github/github/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/github.md",
+      "symbol": "GitHubProvider",
+      "source": "packages/github/github/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/research.md",
+      "symbol": "ResearchBrief",
+      "source": "packages/research/research/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/research.md",
+      "symbol": "VerifiedEvidenceLedger",
+      "source": "packages/research/research/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/research.md",
+      "symbol": "ResearchReportIr",
+      "source": "packages/research/research/src/types.ts"
+    },
+    {
+      "doc": "docs/subsystems/research.md",
+      "symbol": "ResearchEvaluation",
+      "source": "packages/research/research/src/health.ts"
+    },
+    {
+      "doc": "docs/subsystems/research.md",
+      "symbol": "ResearchHealthProjection",
+      "source": "packages/research/research/src/health.ts"
     }
   ]
 }

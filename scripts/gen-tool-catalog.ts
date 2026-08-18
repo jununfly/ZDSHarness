@@ -29,6 +29,7 @@ import type { ImageAttachmentLimits, ImageAttachmentRef, SaveImageAttachment, St
 import UserQuestionService from '@deepseek-ai/dsh-user-questions'
 import PlanModeController from '@deepseek-ai/dsh-plan-mode'
 import WebRuntime from '@deepseek-ai/dsh-web'
+import GitHubRuntime from '@deepseek-ai/dsh-github'
 import * as WebSearchExa from '@deepseek-ai/dsh-web-search-exa'
 import * as WebFetchLocal from '@deepseek-ai/dsh-web-fetch-http'
 import SubagentRuntime from '@deepseek-ai/dsh-subagent'
@@ -60,6 +61,9 @@ import * as ToolTasks from '@deepseek-ai/dsh-tool-jobs'
 import * as ToolTodo from '@deepseek-ai/dsh-tool-todo'
 import * as ToolSubagent from '@deepseek-ai/dsh-tool-subagent'
 import * as ToolWeb from '@deepseek-ai/dsh-tool-web'
+import * as ToolGitHub from '@deepseek-ai/dsh-tool-github'
+import * as ToolResearchReport from '@deepseek-ai/dsh-tool-research-report'
+import * as ToolResearch from '@deepseek-ai/dsh-tool-research'
 import VmWorkflowEngine from '@deepseek-ai/dsh-workflow-worker-thread'
 import * as ToolRalph from '@deepseek-ai/dsh-tool-ralph'
 import * as ToolWorkflow from '@deepseek-ai/dsh-tool-workflow'
@@ -327,6 +331,45 @@ const TOOL_PACKAGES: ToolPackage[] = [
     },
     note:
       'glob and grep are unconditional discovery tools that spawn the packaged ripgrep binary (`@vscode/ripgrep`) through ctx.subprocess as ordinary foreground calls (never background jobs) — no host `rg` install and no shell layer. The catalog uses `sampleOverCapGlobResults: true`; deployments must choose that behavior explicitly. Capped results save the complete formatted list through the optional ctx.spillStore backend; returned locators are follow-up-readable/searchable when the backend exposes local paths in co-located deployments.',
+  },
+  {
+    pkg: '@deepseek-ai/dsh-tool-github',
+    dir: 'tool-github',
+    source: 'packages/github/tool-github/src/index.ts',
+    requires: ['ctx.tools', 'ctx.github', 'ctx.systemPrompt'],
+    writes: ['tool/call', 'tool/result'],
+    async mount(ctx) {
+      await ctx.plugin(GitHubRuntime)
+      await ctx.plugin(ToolGitHub)
+    },
+    note:
+      'The tool Consumer exposes structured github.com repository search and detail reads. Provider selection and transport remain behind ctx.github; the default search schema uses the deployment-owned 30-candidate cap.',
+  },
+  {
+    pkg: '@deepseek-ai/dsh-tool-research',
+    dir: 'tool-research',
+    source: 'packages/research/tool-research/src/index.ts',
+    requires: ['ctx.tools', 'ctx.github', 'ctx.systemPrompt'],
+    writes: ['tool/call', 'tool/result'],
+    async mount(ctx) {
+      await ctx.plugin(GitHubRuntime)
+      await ctx.plugin(ToolResearch)
+    },
+    note:
+      'The Consumer accepts one complete multi-repository brief, retains the sealed commit-pinned ledger, and returns a bounded evidence digest. Raw file tools are not registered by this package; uncovered criteria remain explicit unknowns.',
+  },
+  {
+    pkg: '@deepseek-ai/dsh-tool-research-report',
+    dir: 'tool-research-report',
+    source: 'packages/research/tool-research-report/src/index.ts',
+    requires: ['ctx.tools', 'ctx.fs', 'ctx.systemPrompt'],
+    writes: ['tool/call', 'authoritative Markdown report', 'derived offline HTML report', 'tool/result'],
+    async mount(ctx) {
+      await ctx.plugin(LocalFileSystem)
+      await ctx.plugin(ToolResearchReport)
+    },
+    note:
+      'Prepare compiles evidence-linked Report IR and validates Markdown plus HTML without filesystem effects. Publish accepts one validated token, consumes it before create-if-absent writes, and returns application-owned paths and report hash.',
   },
   {
     pkg: '@deepseek-ai/dsh-tool-terminal',

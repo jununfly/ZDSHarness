@@ -722,6 +722,22 @@ roots(): Agent[]
 
 Source: [`packages/core/agent/src/index.ts:256`](../../packages/core/agent/src/index.ts)
 
+<a id="ctxsdkjsonrpcingress--jsonrpcingress"></a>
+
+### `ctx.sdkJsonRpcIngress` — `JsonRpcIngress`
+
+Host-owned admission control for the stdio JSON-RPC transport.
+
+```ts cordis-catalog
+/**
+ * Begin reading requests. Idempotent while the plugin is active.
+ * @throws when called through a retained handle after plugin disposal.
+ */
+start(): void
+```
+
+Source: [`packages/sdk/server/src/index.ts:25`](../../packages/sdk/server/src/index.ts)
+
 <a id="agent-events"></a>
 
 ### `agent/*` events

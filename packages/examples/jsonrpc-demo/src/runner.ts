@@ -6,6 +6,7 @@
 
 import { existsSync } from 'node:fs'
 import { boot, installFailLoud, loadEnv, resolveConfigPath } from '@deepseek-ai/dsh-app-boot'
+import type {} from '@deepseek-ai/dsh-sdk-jsonrpc-server'
 
 /* v8 ignore start -- composition over tested app-boot/jsonrpc and executable acceptance paths */
 const NAME = 'dsh-jsonrpc-agent'
@@ -36,6 +37,7 @@ export async function runJsonrpcAgent(bareModuleBaseUrl?: string): Promise<void>
   }
 
   const ctx = await boot(NAME, configPath, undefined, undefined, bareModuleBaseUrl)
+  ctx.get('sdkJsonRpcIngress')?.start()
   let exiting = false
 
   async function disposeAndExit(code: number): Promise<void> {

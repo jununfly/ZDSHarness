@@ -101,6 +101,10 @@ A **seam** is a swappable capability with three roles: a **Service Definition** 
 
 Seams are why one provider swap changes the whole product. Filesystem and subprocess providers share one execution world, so pointing them at a remote sandbox moves Bash, PTY, and LSP with them, with no provider forks. [Subagent providers](subsystems/subagent.md) vary just as widely behind one interface, from a fresh child agent to a delegated turn in another product.
 
+Structured GitHub repository research follows the same split: [`dsh-github`](../packages/github/github) owns `ctx.github` and provider selection, [`dsh-github-rest`](../packages/github/github-rest) supplies github.com facts, and [`dsh-tool-github`](../packages/github/tool-github) owns model-facing schemas and presentation. The [GitHub subsystem reference](subsystems/github.md) defines its requests, results, and failure semantics.
+
+Technical research compositions place the complete-brief [`dsh-research`](../packages/research/research) compiler above `ctx.github`: derived navigators select candidate paths, commit-pinned GitHub reads produce canonical evidence, Report IR validates claims and scores, and publication plus health telemetry derive from durable facts. The research preset does not mount raw GitHub or DeepWiki tools.
+
 ## Where new behavior goes
 
 New behavior attaches to a documented extension point. Changing the loop itself updates this map.
@@ -111,6 +115,7 @@ New behavior attaches to a documented extension point. Changing the loop itself 
 | Add a model-facing capability | register on `ctx.tools`; its schema joins prompt assembly |
 | Give one session a different capability set | compose an agent preset; a service row there needs an `isolate` realm |
 | Add shell execution | register a `ctx.shell` backend; the local one spawns through `ctx.subprocess` |
+| Add GitHub repository access | register one provider on `ctx.github`; model-facing compositions mount `dsh-tool-github` |
 | Add persistent terminal execution | register a `ctx.terminals` backend plus `dsh-tool-terminal` |
 | Add a human command | register on `ctx.commands`; it dispatches without a model turn |
 | Add background work | register on `ctx.jobs`; `job_*` tools collect or stop it |

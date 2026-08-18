@@ -27,3 +27,7 @@ An opt-in Web overlay for durable, Session-local reminders. It supports positive
 ## acp-agent
 
 An Agent Client Protocol automation server for programmatic clients, with session, permission, and cancellation support. See the [ACP example reference](acp-agent/README.md).
+
+## tech-research-agent
+
+A technical solution research agent that ranks GitHub projects by topic evidence and stars, deep-reads selected repositories, and publishes Markdown plus offline HTML. See the [technical research example reference](tech-research-agent/README.md).

@@ -27,3 +27,7 @@
 ## acp-agent
 
 面向程序化客户端的 ACP（Agent Client Protocol）自动化服务器，支持会话、权限和取消操作。详见 [ACP 示例参考](acp-agent/README.md)。
+
+## tech-research-agent
+
+一个技术方案调研 agent：按主题证据和 star 数为 GitHub 项目排序，深读选定仓库，并发布 Markdown 与离线 HTML。详见[技术调研示例参考](tech-research-agent/README.md)。

@@ -27,6 +27,9 @@
 | `@deepseek-ai/dsh-tool-str-replace-editor` | `str_replace_editor` | `ctx.tools`、`ctx.fs` | `tool/call`、`fs/observed after view presence/absence, edit absence, or successful mutation`、`tool/result` | - | 基于文件系统 seam 的独立查看／创建／唯一字面量替换／按行插入工具；可与任何 shell 或终端接口组合。 |
 | `@deepseek-ai/dsh-tool-fs` | `edit`、`read`、`read_image`、`write` | `ctx.tools`、`ctx.fs`、`ctx.systemPrompt`、`ctx.attachments (read_image registration)`、`ctx.llm + an image-capable route (read_image execution)` | `tool/call`、`fs/write-intent or fs/edit-intent for mutations`、`fs/observed after read presence/absence or successful file operation`、`durable attachment (read_image)`、`tool/result` | - | 先读后写／编辑策略由 `@deepseek-ai/dsh-fs-observation-policy` 添加；它是一个 `fs/*` 事件门禁插件，不会改变 schema。加载这些工具的部署按预期也应加载该插件。没有 `ctx.attachments` 时 `read_image` 不会注册；其 schema 与路由无关，执行时除非确切路由的模型声明图像输入，否则拒绝。 |
 | `@deepseek-ai/dsh-tool-fs-search` | `glob`、`grep` | `ctx.tools`、`ctx.subprocess`、`ctx.systemPrompt` | `tool/call`、`tool/result` | - | glob 和 grep 是无条件可用的发现工具，通过 ctx.subprocess spawn 随包提供的 ripgrep 二进制文件（`@vscode/ripgrep`），并作为普通前台调用运行，绝不作为后台任务；无需在宿主机安装 `rg`，也不经过 shell 层。本目录使用 `sampleOverCapGlobResults: true`；部署必须显式选择该行为。结果超过上限时，会通过可选的 ctx.spillStore 后端保存完整的格式化列表；在共置部署中，如果后端公开本地路径，返回的定位信息可供后续读取／搜索。 |
+| `@deepseek-ai/dsh-tool-github` | `github_read_repository`、`github_search_repositories` | `ctx.tools`、`ctx.github`、`ctx.systemPrompt` | `tool/call`、`tool/result` | - | 该工具 Consumer 暴露结构化 github.com 仓库搜索与详情读取。提供方选择和传输保留在 ctx.github 之后；默认搜索 schema 使用由部署方控制的 30 个候选项上限。 |
+| `@deepseek-ai/dsh-tool-research` | `research_collect_evidence` | `ctx.tools`、`ctx.github`、`ctx.systemPrompt` | `tool/call`、`tool/result` | - | Consumer 接受一个完整的多仓库 brief，保留 sealed 且固定 commit 的 ledger，并返回有界 evidence digest。本包不注册原始文件工具；未覆盖判据保持为显式 unknown。 |
+| `@deepseek-ai/dsh-tool-research-report` | `prepare_research_report`、`publish_research_report` | `ctx.tools`、`ctx.fs`、`ctx.systemPrompt` | `tool/call`、`authoritative Markdown report`、`derived offline HTML report`、`tool/result` | - | Prepare 编译关联证据的 Report IR，并在不产生文件系统 effect 的情况下校验 Markdown 与 HTML。Publish 接受一个已校验 token，在 create-if-absent 写入前消耗该 token，并返回应用所有的路径与 report hash。 |
 | `@deepseek-ai/dsh-tool-terminal` | `terminal_close`、`terminal_list`、`terminal_open`、`terminal_read`、`terminal_send`、`terminal_signal` | `ctx.tools`、`ctx.terminals`、`ctx.systemPrompt`、`ctx.jobs at call time for run_in_background` | `tool/call`、`tool/result` | - | 这 6 个终端工具需要选择启用，用于补充一次性 bash／文件系统工具。`terminal_send(run_in_background: true)` 会注册到 `ctx.jobs`；schema 不包含 TUI、具名按键序列、BEL、调整尺寸、自动启动和跨 agent 共享。 |
 | `@deepseek-ai/dsh-tool-goal` | `create_goal`、`get_goal`、`update_goal` | `ctx.tools`、`ctx.agents`、`ctx.goals`、`ctx.systemPrompt`、`a calling Agent in an authorized open turn` | `tool/call`、`goal/change for mutations`、`tool/result` | - | create、edit、pause 和 resume 要求直接来自人类的根权限；complete 和 blocked 也接受确切的当前 Goal Round。blocked 的默认下限是 3 个获准的 Round。 |
 | `@deepseek-ai/dsh-schedule` | `schedule_create`、`schedule_delete`、`schedule_list` | `ctx.tools`、`ctx.sessions`、Session 持久化、未来创建的 live 根 Agent | `tool/call`、`schedule/change create or delete`、`tool/result` | - | 仅在选择启用的 Schedule 插件加载后创建的 live 根 Agent scope 内注册。版本 1 接受 after_seconds、显式绝对 at 和有界固定速率 every_seconds，并披露 session-local 交付；管理读取与变更必须通过共享的 Session 持久化 barrier。 |
@@ -776,6 +779,535 @@ pwsh 工具是 Windows 组合中 bash 执行器 seam 的 PowerShell 方言消费
 来源：[`packages/fs/tool-fs-search/src/index.ts`](../packages/fs/tool-fs-search/src/index.ts)
 
 glob 和 grep 是无条件可用的发现工具，通过 ctx.subprocess spawn 随包提供的 ripgrep 二进制文件（`@vscode/ripgrep`），并作为普通前台调用运行，绝不作为后台任务；无需在宿主机安装 `rg`，也不经过 shell 层。本目录使用 `sampleOverCapGlobResults: true`；部署必须显式选择该行为。结果超过上限时，会通过可选的 ctx.spillStore 后端保存完整的格式化列表；在共置部署中，如果后端公开本地路径，返回的定位信息可供后续读取／搜索。
+
+<a id="deepseek-aidsh-tool-github"></a>
+
+## `@deepseek-ai/dsh-tool-github`
+
+### `github_read_repository`
+
+读取结构化 github.com 仓库事实，并在 README 存在时返回其内容。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "owner": {
+      "type": "string",
+      "description": "Repository owner."
+    },
+    "name": {
+      "type": "string",
+      "description": "Repository name."
+    }
+  },
+  "required": [
+    "owner",
+    "name"
+  ]
+}
+```
+
+来源：[`packages/github/tool-github/src/index.ts`](../packages/github/tool-github/src/index.ts)
+
+### `github_search_repositories`
+
+按 star 数降序搜索 github.com 仓库，并返回结构化仓库事实。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "query": {
+      "type": "string",
+      "description": "GitHub repository search query."
+    }
+  },
+  "required": [
+    "query"
+  ]
+}
+```
+
+来源：[`packages/github/tool-github/src/index.ts`](../packages/github/tool-github/src/index.ts)
+
+该工具 Consumer 暴露结构化 github.com 仓库搜索与详情读取。提供方选择和传输机制保留在 ctx.github 之后；默认搜索 schema 使用由部署方控制的 30 个候选项上限。
+
+<a id="deepseek-aidsh-tool-research"></a>
+
+## `@deepseek-ai/dsh-tool-research`
+
+### `research_collect_evidence`
+
+发现候选项目、固定仓库 revision、保留 sealed canonical ledger，并返回其面向模型的有界 evidence digest。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "brief": {
+      "type": "object",
+      "description": "Complete zj-research-brief/v1 object with explicit repositories or discovery, shared criteria, policy version, and budgets.",
+      "additionalProperties": false,
+      "properties": {
+        "schema": {
+          "type": "string",
+          "description": "Research brief schema version.",
+          "const": "zj-research-brief/v1"
+        },
+        "topic": {
+          "type": "string",
+          "description": "Decision question or technical topic shared by every candidate."
+        },
+        "criteria": {
+          "type": "array",
+          "description": "Shared evidence questions applied to every repository.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique stable criterion id."
+              },
+              "question": {
+                "type": "string",
+                "description": "Question canonical evidence must answer."
+              },
+              "critical": {
+                "type": "boolean",
+                "description": "Whether report claims for this criterion require evidence."
+              },
+              "keywords": {
+                "type": "array",
+                "description": "Terms used to select relevant commit-pinned files.",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "question",
+              "critical",
+              "keywords"
+            ]
+          }
+        },
+        "repositories": {
+          "type": "array",
+          "description": "Explicit repositories included in the comparison.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "owner": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "owner",
+              "name"
+            ]
+          }
+        },
+        "discovery": {
+          "type": "object",
+          "description": "Optional deterministic GitHub candidate discovery.",
+          "additionalProperties": false,
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "GitHub repository search query."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum discovered candidates."
+            },
+            "topicKeywords": {
+              "type": "array",
+              "description": "Terms used to score task-specific topic match.",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "query",
+            "limit",
+            "topicKeywords"
+          ]
+        },
+        "policyVersion": {
+          "type": "string",
+          "description": "Caller-owned evidence policy identifier retained in the sealed ledger."
+        },
+        "budget": {
+          "type": "object",
+          "description": "Optional bounded canonical-read budget.",
+          "additionalProperties": false,
+          "properties": {
+            "maxFiles": {
+              "type": "integer",
+              "description": "Maximum canonical files across all repositories."
+            },
+            "maxBytes": {
+              "type": "integer",
+              "description": "Maximum canonical source bytes across all repositories."
+            },
+            "deadlineMs": {
+              "type": "integer",
+              "description": "Maximum evidence collection duration in milliseconds."
+            }
+          }
+        }
+      },
+      "required": [
+        "schema",
+        "topic",
+        "criteria",
+        "repositories",
+        "policyVersion"
+      ]
+    }
+  },
+  "required": [
+    "brief"
+  ]
+}
+```
+
+来源：[`packages/research/tool-research/src/index.ts`](../packages/research/tool-research/src/index.ts)
+
+Consumer 接受一个完整的多仓库 brief，保留 sealed 且固定 commit 的 ledger，并返回有界 evidence digest。本包不注册原始文件工具；未覆盖判据保持为显式 unknown。
+
+<a id="deepseek-aidsh-tool-research-report"></a>
+
+## `@deepseek-ai/dsh-tool-research-report`
+
+### `prepare_research_report`
+
+在不写入文件的情况下编译并校验关联证据的 Report IR。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "report": {
+      "type": "object",
+      "description": "Complete zj-research-report-ir/v1 object.",
+      "additionalProperties": false,
+      "properties": {
+        "schema": {
+          "type": "string",
+          "const": "zj-research-report-ir/v1"
+        },
+        "family": {
+          "type": "string",
+          "enum": [
+            "technical-c4/v1",
+            "zj-draft/v1"
+          ]
+        },
+        "title": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "ledgerFingerprint": {
+          "type": "string",
+          "description": "ledgerFingerprint from the research_collect_evidence digest."
+        },
+        "concepts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "key",
+              "value"
+            ]
+          }
+        },
+        "diagrams": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "landscape",
+                  "container",
+                  "topic"
+                ]
+              },
+              "mermaid": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title",
+              "kind",
+              "mermaid"
+            ]
+          }
+        },
+        "candidates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "repository": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "owner": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "owner",
+                  "name"
+                ]
+              },
+              "stars": {
+                "type": "integer"
+              },
+              "topicMatch": {
+                "type": "number"
+              },
+              "evidenceIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "repository",
+              "stars",
+              "topicMatch",
+              "evidenceIds"
+            ]
+          }
+        },
+        "cards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "summary": {
+                "type": "string"
+              },
+              "claimIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "title",
+              "summary",
+              "claimIds"
+            ]
+          }
+        },
+        "claims": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "critical": {
+                "type": "boolean"
+              },
+              "evidenceIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "text",
+              "critical",
+              "evidenceIds"
+            ]
+          }
+        },
+        "comparisons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "claimIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "text",
+              "claimIds"
+            ]
+          }
+        },
+        "recommendations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "comparisonIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "text",
+              "comparisonIds"
+            ]
+          }
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "definition": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              },
+              "method": {
+                "type": "string"
+              },
+              "condition": {
+                "type": "string"
+              },
+              "expected": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "key",
+              "definition",
+              "unit",
+              "method",
+              "condition",
+              "expected"
+            ]
+          }
+        }
+      },
+      "required": [
+        "schema",
+        "family",
+        "title",
+        "summary",
+        "ledgerFingerprint",
+        "concepts",
+        "diagrams",
+        "candidates",
+        "cards",
+        "claims",
+        "comparisons",
+        "recommendations",
+        "metrics"
+      ]
+    },
+    "outputPath": {
+      "type": "string",
+      "description": "Destination .md path; the .html sibling is derived automatically."
+    }
+  },
+  "required": [
+    "report",
+    "outputPath"
+  ]
+}
+```
+
+来源：[`packages/research/tool-research-report/src/index.ts`](../packages/research/tool-research-report/src/index.ts)
+
+### `publish_research_report`
+
+恰好一次发布一个已校验的调研报告 token。
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "validationToken": {
+      "type": "string",
+      "description": "Single-use token returned by prepare_research_report."
+    }
+  },
+  "required": [
+    "validationToken"
+  ]
+}
+```
+
+来源：[`packages/research/tool-research-report/src/index.ts`](../packages/research/tool-research-report/src/index.ts)
+
+Prepare 编译关联证据的 Report IR，并在不产生文件系统 effect 的情况下校验 Markdown 与 HTML。Publish 接受一个已校验 token，在 create-if-absent 写入前消耗该 token，并返回应用所有的路径与 report hash。
 
 <a id="deepseek-aidsh-tool-terminal"></a>
 

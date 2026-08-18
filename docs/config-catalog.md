@@ -624,6 +624,24 @@ Depends on: [`LocalConfig`](#deepseek-aidsh-fs-local)
 
 Source: [`packages/fs/fs-sandbox/src/index.ts:49`](../packages/fs/fs-sandbox/src/index.ts)
 
+<a id="deepseek-aidsh-github-rest"></a>
+
+## `@deepseek-ai/dsh-github-rest`
+
+Requires: `github`
+
+```ts config-catalog
+/** GitHub REST provider configuration. */
+export interface Config {
+  /** Credential reference resolved before each operation; defaults to `GITHUB_TOKEN`. */
+  tokenEnv?: string
+  /** Timeout applied independently to each REST request. */
+  timeoutMs?: number
+}
+```
+
+Source: [`packages/github/github-rest/src/index.ts:24`](../packages/github/github-rest/src/index.ts)
+
 <a id="deepseek-aidsh-goal"></a>
 
 ## `@deepseek-ai/dsh-goal`
@@ -1461,6 +1479,26 @@ export interface Config {
 
 Source: [`packages/guard/repeat-tool-reminder/src/index.ts:28`](../packages/guard/repeat-tool-reminder/src/index.ts)
 
+<a id="deepseek-aidsh-research-telemetry-otel"></a>
+
+## `@deepseek-ai/dsh-research-telemetry-otel`
+
+Requires: `sessions`
+
+```ts config-catalog
+/** OTLP/HTTP Metrics export settings. */
+export interface Config {
+  /** Full OTLP Metrics endpoint. */
+  url: string
+  /** Periodic export interval in milliseconds. */
+  exportIntervalMillis?: number
+  /** Per-export transport timeout in milliseconds. */
+  timeoutMillis?: number
+}
+```
+
+Source: [`packages/research/research-telemetry-otel/src/index.ts:20`](../packages/research/research-telemetry-otel/src/index.ts)
+
 <a id="deepseek-aidsh-sandbox-local"></a>
 
 ## `@deepseek-ai/dsh-sandbox-local`
@@ -1542,7 +1580,7 @@ export interface JsonRpcConfig {
 
 Depends on: `Readable` (`node:stream`) · `Writable` (`node:stream`)
 
-Source: [`packages/sdk/server/src/index.ts:25`](../packages/sdk/server/src/index.ts)
+Source: [`packages/sdk/server/src/index.ts:41`](../packages/sdk/server/src/index.ts)
 
 <a id="deepseek-aidsh-session-persistence-jsonl"></a>
 
@@ -2429,6 +2467,24 @@ export interface Config {
 
 Source: [`packages/fs/tool-fs-search/src/index.ts:73`](../packages/fs/tool-fs-search/src/index.ts)
 
+<a id="deepseek-aidsh-tool-github"></a>
+
+## `@deepseek-ai/dsh-tool-github`
+
+Requires: `github` · `tools` · `systemPrompt`
+
+```ts config-catalog
+/** GitHub tool configuration. */
+export interface Config {
+  /** Candidate cap for every search; must be from 1 through 30. */
+  searchMaxResults?: number
+  /** Cooperative timeout applied to each tool call. */
+  timeoutMs?: number
+}
+```
+
+Source: [`packages/github/tool-github/src/index.ts:21`](../packages/github/tool-github/src/index.ts)
+
 <a id="deepseek-aidsh-tool-goal"></a>
 
 ## `@deepseek-ai/dsh-tool-goal`
@@ -2536,6 +2592,26 @@ export interface Config {
 ```
 
 Source: [`packages/workflow/tool-ralph/src/index.ts:23`](../packages/workflow/tool-ralph/src/index.ts)
+
+<a id="deepseek-aidsh-tool-research"></a>
+
+## `@deepseek-ai/dsh-tool-research`
+
+Requires: `github` · `tools` · `systemPrompt`
+
+```ts config-catalog
+/** Internal DeepWiki navigation settings; canonical reads always remain on GitHub. */
+export interface Config {
+  /** Streamable HTTP MCP endpoint; omission disables DeepWiki navigation. */
+  deepWikiUrl?: string
+  /** Per-call DeepWiki MCP timeout. */
+  deepWikiTimeoutMs?: number
+  /** Exact public repositories allowed to leave the GitHub source adapter. */
+  externalNavigationRepositories?: string[]
+}
+```
+
+Source: [`packages/research/tool-research/src/index.ts:24`](../packages/research/tool-research/src/index.ts)
 
 <a id="deepseek-aidsh-tool-session-query"></a>
 
@@ -3067,6 +3143,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 - `@deepseek-ai/dsh-cordis-client-runner` ([`packages/extensions/cordis-client-runner/src/index.ts`](../packages/extensions/cordis-client-runner/src/index.ts))
 - `@deepseek-ai/dsh-fs-e2b` — requires `e2b` ([`packages/e2b/fs-e2b/src/index.ts`](../packages/e2b/fs-e2b/src/index.ts))
 - `@deepseek-ai/dsh-fs-observation-policy` ([`packages/fs/fs-observation-policy/src/index.ts`](../packages/fs/fs-observation-policy/src/index.ts))
+- `@deepseek-ai/dsh-github` ([`packages/github/github/src/index.ts`](../packages/github/github/src/index.ts))
 - `@deepseek-ai/dsh-goal-round-driver` — requires `agents` · `goals` · `sessions` ([`packages/goal/goal-round-driver/src/index.ts`](../packages/goal/goal-round-driver/src/index.ts))
 - `@deepseek-ai/dsh-host-directory-picker-auto` — requires `webServer` · `loader` ([`packages/host/directory-picker-auto/src/index.ts`](../packages/host/directory-picker-auto/src/index.ts))
 - `@deepseek-ai/dsh-host-directory-picker-native` ([`packages/host/directory-picker-native/src/index.ts`](../packages/host/directory-picker-native/src/index.ts))
@@ -3087,6 +3164,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 - `@deepseek-ai/dsh-tool-ask-user` — requires `tools` · `userQuestions` ([`packages/interaction/tool-ask-user/src/index.ts`](../packages/interaction/tool-ask-user/src/index.ts))
 - `@deepseek-ai/dsh-tool-call-timeout-policy` — requires `tools` ([`packages/guard/timeout-policy/src/index.ts`](../packages/guard/timeout-policy/src/index.ts))
 - `@deepseek-ai/dsh-tool-cordis` — requires `tools` · `systemPrompt` · `dynamicCordisRunner` · `cordisInspect` ([`packages/extensions/tool-cordis/src/index.ts`](../packages/extensions/tool-cordis/src/index.ts))
+- `@deepseek-ai/dsh-tool-research-report` — requires `fs` · `tools` · `systemPrompt` ([`packages/research/tool-research-report/src/index.ts`](../packages/research/tool-research-report/src/index.ts))
 - `@deepseek-ai/dsh-tool-subagent-control` — requires `tools` · `subagents` ([`packages/subagent/tool-subagent-control/src/index.ts`](../packages/subagent/tool-subagent-control/src/index.ts))
 - `@deepseek-ai/dsh-user-questions` ([`packages/interaction/user-questions/src/index.ts`](../packages/interaction/user-questions/src/index.ts))
 - `@deepseek-ai/dsh-workspace` — requires `storageDomain` · `sessionPersistence` ([`packages/workspace/workspace/src/index.ts`](../packages/workspace/workspace/src/index.ts))
@@ -3137,6 +3215,9 @@ Imported as libraries by other packages; a `cordis.yml` cannot load them.
 - `@deepseek-ai/dsh-loader-smoke` ([`packages/test-support/loader-smoke/src/index.ts`](../packages/test-support/loader-smoke/src/index.ts))
 - `@deepseek-ai/dsh-native-command` ([`packages/util/native-command/src/index.ts`](../packages/util/native-command/src/index.ts))
 - `@deepseek-ai/dsh-output-retention` ([`packages/util/output-retention/src/index.ts`](../packages/util/output-retention/src/index.ts))
+- `@deepseek-ai/dsh-research` ([`packages/research/research/src/index.ts`](../packages/research/research/src/index.ts))
+- `@deepseek-ai/dsh-research-cli` ([`packages/research/research-cli/src/index.ts`](../packages/research/research-cli/src/index.ts))
+- `@deepseek-ai/dsh-research-report` ([`packages/research/research-report/src/index.ts`](../packages/research/research-report/src/index.ts))
 - `@deepseek-ai/dsh-sandbox-windows-acl` ([`packages/sandbox/sandbox-windows-acl/src/index.ts`](../packages/sandbox/sandbox-windows-acl/src/index.ts))
 - `@deepseek-ai/dsh-scope` ([`packages/core/scope/src/index.ts`](../packages/core/scope/src/index.ts))
 - `@deepseek-ai/dsh-sdk-client` ([`packages/sdk/client/src/index.ts`](../packages/sdk/client/src/index.ts))

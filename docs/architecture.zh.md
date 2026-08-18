@@ -105,6 +105,10 @@ turn/end
 
 seam 正是替换一个提供方就能改变整个产品的原因。文件系统与进程提供方共享同一个执行世界，因此把它们指向远程沙箱，也就把 Bash、PTY 和 LSP 一并搬了过去，无需提供方专用 fork。[subagent 提供方](subsystems/subagent.md)在同一个接口之后同样千差万别，从新建一个子 agent，到把一个轮次委派给另一个产品。
 
+结构化 GitHub 仓库调研采用相同拆分：[`dsh-github`](../packages/github/github) 负责 `ctx.github` 和提供方选择，[`dsh-github-rest`](../packages/github/github-rest) 提供 github.com 事实，[`dsh-tool-github`](../packages/github/tool-github) 负责面向模型的 schema 与展示。[GitHub 子系统参考](subsystems/github.md)定义其请求、结果和失败语义。
+
+技术调研组合在 `ctx.github` 之上放置完整 brief 的 [`dsh-research`](../packages/research/research) compiler：派生 navigator 选择候选路径，固定 commit 的 GitHub 读取产生 canonical evidence，Report IR 校验 claim 与 score，发布和健康 telemetry 从 durable fact 派生。调研 preset 不挂载原始 GitHub 或 DeepWiki tool。
+
 ## 新行为的归属位置
 
 新行为附加到已有文档记录的扩展点。改动循环本身时，本映射随之更新。
@@ -115,6 +119,7 @@ seam 正是替换一个提供方就能改变整个产品的原因。文件系统
 | 添加面向模型的能力 | 在 `ctx.tools` 上注册；其 schema 加入提示词组装 |
 | 让某个会话拥有不同的能力集合 | 组装一个 agent preset；其中的服务行需要 `isolate` realm |
 | 添加 shell 执行 | 注册 `ctx.shell` 后端；本地后端通过 `ctx.subprocess` spawn 进程 |
+| 添加 GitHub 仓库访问 | 在 `ctx.github` 上注册一个提供方；面向模型的组合挂载 `dsh-tool-github` |
 | 添加持久化终端执行 | 注册 `ctx.terminals` 后端和 `dsh-tool-terminal` |
 | 添加用户命令 | 在 `ctx.commands` 上注册；它无需模型轮次即可分派 |
 | 添加后台工作 | 在 `ctx.jobs` 上注册；`job_*` 工具负责收集或停止 |

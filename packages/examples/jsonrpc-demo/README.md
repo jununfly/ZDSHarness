@@ -8,7 +8,7 @@ Bin-only app that boots an external `cordis.yml`; its [`jsonrpc`](../../sdk/serv
 
 The first non-empty channel wins: `$DSH_CORDIS_CONFIG`, then positional `argv[2]`. If neither names an existing file, the bin prints one-line usage to stderr and exits 1; there is no working-directory or built-in fallback. [`dsh-app-boot`](../../boot/app-boot/README.md) makes plugin load failures fatal. This protocol does not use `DSH_SNAPSHOT`.
 
-A config without `dsh-sdk-jsonrpc-server` is valid and serves nothing; the bin does not designate a server plugin.
+A config without `dsh-sdk-jsonrpc-server` is valid and serves nothing; the bin does not designate a server plugin. When the config supplies the server, the bin opens its stdin ingress only after `dsh-app-boot` has settled and audited every enabled entry.
 
 ## Exit lifecycle
 

@@ -57,7 +57,7 @@ async function settle(): Promise<void> {
 /** Mount the real plugin on a minimal harness with in-memory stdio and exit. */
 async function mountPlugin(
   storageDir: string,
-  options: { writeDelayMs?: number; failFlush?: boolean } = {},
+  options: { writeDelayMs?: number; failFlush?: boolean; start?: boolean } = {},
 ): Promise<ApplyHarness> {
   const ctx = new Context()
   await ctx.plugin(agentCore, { workspaceContext: false })
@@ -102,6 +102,7 @@ async function mountPlugin(
 
   ctx.effect(() => () => { events.push({ kind: 'root-disposed' }) }, 'jsonrpc test root-disposal witness')
   const fiber = await ctx.plugin(jsonrpc, { input, output, exit })
+  if (options.start !== false) ctx.sdkJsonRpcIngress.start()
 
   const frames = (): Record<string, unknown>[] =>
     events.flatMap(event => event.kind === 'frame' ? [event.frame] : [])
@@ -150,6 +151,25 @@ async function mockCompletionServer(): Promise<{ url: string; requests: unknown[
 }
 
 describe('dsh-sdk-jsonrpc-server plugin apply', () => {
+  it('does not read buffered input until the host opens ingress', async () => {
+    const storageDir = await mkdtemp(join(tmpdir(), 'dsh-jsonrpc-apply-ready-'))
+    vi.stubEnv('DEEPSEEK_API_KEY', 'test-key')
+    const harness = await mountPlugin(storageDir, { start: false })
+    try {
+      harness.send({ jsonrpc: '2.0', id: 'deferred-init', method: 'initialize', params: { cwd: storageDir, provider: 'deepseek-official', model: 'apply-model' } })
+      await settle()
+      expect(harness.frames()).toEqual([])
+
+      harness.ctx.sdkJsonRpcIngress.start()
+      harness.ctx.sdkJsonRpcIngress.start()
+      const response = await harness.waitForFrame(frame => frame.id === 'deferred-init', 'deferred initialize response')
+      expect(response).toMatchObject({ id: 'deferred-init', result: { serverInfo: { name: 'deepseek-harness-sdk-runtime' } } })
+    } finally {
+      await harness.dispose()
+      await rm(storageDir, { recursive: true, force: true })
+    }
+  })
+
   it('serves initialize over the injected stdio pair', async () => {
     const storageDir = await mkdtemp(join(tmpdir(), 'dsh-jsonrpc-apply-init-'))
     vi.stubEnv('DEEPSEEK_API_KEY', 'test-key')
@@ -281,6 +301,7 @@ describe('dsh-sdk-jsonrpc-server plugin apply', () => {
     const storageDir = await mkdtemp(join(tmpdir(), 'dsh-jsonrpc-apply-dispose-'))
     const harness = await mountPlugin(storageDir)
     try {
+      const ingress = harness.ctx.sdkJsonRpcIngress
       // Prove the handler-rejection path is live before disposal.
       harness.send({ jsonrpc: '2.0', id: 'probe-1', method: 'nope/unknown' })
       const error = await harness.waitForFrame(frame => frame.id === 'probe-1', 'error response for unknown method')
@@ -291,6 +312,7 @@ describe('dsh-sdk-jsonrpc-server plugin apply', () => {
 
       await harness.fiber.dispose()
       expect(harness.events.some(event => event.kind === 'root-disposed')).toBe(false)
+      expect(() => { ingress.start() }).toThrow('JSON-RPC ingress is disposed')
 
       const before = harness.frames().length
       harness.send({ jsonrpc: '2.0', id: 'probe-2', method: 'initialize', params: { cwd: storageDir, provider: 'deepseek-official', model: 'x' } })
