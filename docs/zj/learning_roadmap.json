@@ -1302,12 +1302,23 @@
     "1-6-4-1": {
       "id": "1-6-4-1",
       "label": "ZAgentic 双 skill 与 standalone compiler 接入的版本化收口",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-6-4",
       "children": [],
-      "decisions": [],
-      "notes": "ZAgentic main@36bb4f2 已提交推送；Codex/WorkBuddy copy 投影已刷新；固定 compiler artifact 与 consumer hash check 待跨仓 contract 切片完成。"
+      "decisions": [
+        {
+          "q": "固定 compiler artifact 如何兼顾跨设备可用与仓库体积？",
+          "answer": "采用 commit-pinned hybrid bundle：esbuild 打包 ZHarness compiler 与可安全内联依赖，保留 jsdom 标准运行闭包和 Mermaid 离线浏览器脚本，生成确定性 tgz 并记录 SHA-256。",
+          "note": "完整 pnpm deploy 实测归档约 86 MB 且残留依赖链接；hybrid bundle 隔离 describe 通过，约 5.1 MB。"
+        },
+        {
+          "q": "Agent 成熟后 ZAgentic research skills 是否退出？",
+          "answer": "不退出；Agent 与 ZAgentic skill 服务不同使用场景，成熟后继续双赛道长期保留并共享 compiler/eval 事实源。",
+          "note": "skill 适合嵌入既有 agent 工作流与显式编排；Agent 适合作为托管默认入口。"
+        }
+      ],
+      "notes": "ZAgentic main@100a2f5 已提交推送；固定 artifact 锁定 ZHarness c75d466，SHA-256 23d2be62；默认 bundled adapter、确定性 updater、7-case golden contract、GitHub workflow 与 Codex/WorkBuddy 投影已完成。双 skill 作为独立使用入口长期保留。"
     },
     "1-6-4-2": {
       "id": "1-6-4-2",
@@ -1332,12 +1343,12 @@
     "1-6-4-4": {
       "id": "1-6-4-4",
       "label": "跨仓 consumer contract 与真实 API smoke",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-6-4",
       "children": [],
       "decisions": [],
-      "notes": "ZHarness 原生 Agent 已通过认证 GitHub + DeepSeek 的单次真实 API smoke；ZAgentic consumer artifact hash contract 待固定到本次 ZHarness commit。"
+      "notes": "ZHarness 原生 Agent 已通过认证 GitHub + DeepSeek 真实 API smoke；ZAgentic consumer contract 默认从 commit-pinned artifact 运行，并覆盖缺失、篡改与完整 Markdown/HTML 发布链。"
     },
     "1-6-4-5": {
       "id": "1-6-4-5",
@@ -1362,7 +1373,7 @@
   },
   "metadata": {
     "created": "2026-08-15 11:25:33",
-    "updated": "2026-08-19 01:26:48",
+    "updated": "2026-08-19 01:49:35",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZHarness/docs/zj/learning_roadmap.md"
   }
 }

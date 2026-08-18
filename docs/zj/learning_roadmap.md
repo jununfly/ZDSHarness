@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `learning_roadmap.json` | 最后更新: 2026-08-19 01:26:48
+> 数据文件: `learning_roadmap.json` | 最后更新: 2026-08-19 01:49:35
 
 [~][X+] 1. ZHarness 学习计划
 ├── [x][Y+] 1-1. 跑通开发环境
@@ -30,7 +30,7 @@
     ├── [x][Y+] 1-6-3. 技术方案调研分析 agent
     └── [~][Y+] 1-6-4. 技术调研 Agent 可信实验闭环与团队产品化
 
-### 当前施工：1-6-4-1. ZAgentic 双 skill 与 standalone compiler 接入的版本化收口
+### 当前施工：1-6-4-3. 版本化 keyless corpus、盲测 Judge 与人工 rubric
 
-ZAgentic main@36bb4f2 已提交推送；Codex/WorkBuddy copy 投影已刷新；固定 compiler artifact 与 consumer hash check 待跨仓 contract 切片完成。
+10 个中英质量 case × 3 repetitions × 2 arms 与独立 reliability fault corpus 已入库；盲测 Judge 接口已实现，人工 rubric 及基线阈值仍待固化。
 <!-- ROADMAP_SECTION_END -->
