@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `learning_roadmap.json` | 最后更新: 2026-08-19 02:19:23
+> 数据文件: `learning_roadmap.json` | 最后更新: 2026-08-19 10:36:44
 
 [~][X+] 1. ZHarness 学习计划
 ├── [x][Y+] 1-1. 跑通开发环境
@@ -29,12 +29,4 @@
     ├── [x][Y+] 1-6-2. llm 能力包按需精读：遇到 llm 行为问题时带出
     ├── [x][Y+] 1-6-3. 技术方案调研分析 agent
     └── [~][Y+] 1-6-4. 技术调研 Agent 可信实验闭环与团队产品化
-
-### 当前施工：1-6-4-3. 版本化 keyless corpus、盲测 Judge 与人工 rubric
-
-ZHarness 已在本地提交 9172aa0：10 个双语 quality case 对应不可追改 rubric、annotation 与 Judge calibration 资产，校准结果为 score MAE 2.4、tolerance 命中率 1.0、recommendation agreement 1.0、risk-count MAE 0.1。ZAgentic 已生成双入口 compiler-lock/v2 artifact 并通过 7 个 compiler case 与 10 个 evaluation case；节点暂不完成，因为 9172aa0 尚未推送，doc-sync 仍被既有 docs/zj markdown wrap、双语配对及 events-effects-demo code block 错误阻塞。
-
-**决策：**
-- Q: 人工 rubric 与 Judge 校准如何形成可执行门禁？ → 引入三个不可追改资产：rubric set、逐 case 人工 annotation set、逐报告 Judge calibration set；manifest 的每个 quality case 必须解析到 rubric 和人工真值，Judge 校准通过后才允许进入质量基线。 (第一版校准固定 10 个双语样本；比较四个 evidence 分、rubricScore、recommendationAcceptable 与 keyRisksOmitted。校准阈值属于立即执行的协议硬门禁，30 样本后的统计 SLO 仍另行冻结。)
-- Q: 推荐结论如何避免被单一标准答案绑死？ → 人工 annotation 保存可接受 recommendation fingerprint 集合并允许显式 abstain，不要求唯一推荐；Judge 结果增加 recommendationAcceptable 布尔事实。 (决策有多个合理答案时，以团队约束下的可接受集合评估，不用字符串相等替代判断。)
 <!-- ROADMAP_SECTION_END -->
