@@ -20,7 +20,7 @@
     "WorkBuddy records a receipt with observed commit, checks run, result, and next action.",
     "Codex verifies the receipt and either accepts it or marks the packet blocked for Human decision."
   ],
-  "source_commit": "4472a73",
+  "source_commit": "4472a73a9c66b247009feef6dd178fb520fe7b27",
   "handoff_status": "ready-for-handoff",
   "receipt": null
 }
