@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/prds/federated-context.md
-federated-context.md: a4808a0c2c644a301d31e1d6692d45d898872c55
-federated-context.zh.md: 47878820605ea25d2e3dec016c23cfff59477200
+federated-context.md: a44ae47b6516d3b049bc548a7e78b8f726b18b4b
+federated-context.zh.md: 50c0c82fe9a28d0b1bdab50d047441b73a285f6e

@@ -101,11 +101,51 @@ Every fork proposal must link a reproducible PoC failure and explain why an inde
 
 MyContext is not a competing replacement for TencentDB-Agent-Memory. It is a potential second production Adapter: MyContext ingests and retrieves private personal context on a device, and only facts selected by explicit policy and carrying an owner and provenance enter the shared team layer. TencentDB-Agent-Memory continues to store shared facts, while the ZHarness/ZAgentic control plane decides whether to publish them.
 
+## Same-device Codex–WorkBuddy smoke test
+
+Before the two-device PoC, Codex and WorkBuddy on one device verify the handoff protocol through one reproducible Work Packet. `device_id` is the stable human-assigned device slug `shanghai-macbook-01`; the two Agent IDs are `agent-codex-01` and `agent-workbuddy-01`.
+
+The Work Packet is created and committed by Codex, executed and acknowledged by WorkBuddy, and verified and closed by Codex. A local uncommitted state is never a handoff fact; the source commit and receipt are the handoff evidence.
+
+```json
+{
+  "work_packet_id": "wp-federated-context-1-1-001",
+  "initiative_id": "zharness",
+  "spec_id": "federated-context",
+  "plan_id": "federated-context-roadmap",
+  "node_id": "1-1",
+  "owner_agent_id": "agent-codex-01",
+  "consumer_agent_id": "agent-workbuddy-01",
+  "device_id": "shanghai-macbook-01",
+  "objective": "Verify same-device Codex-to-WorkBuddy-to-Codex handoff through GitHub-backed state.",
+  "allowed_paths": [
+    "docs/prds/federated-context.md",
+    "docs/plans/federated-context-roadmap.json",
+    "docs/plans/federated-context-roadmap.md"
+  ],
+  "acceptance_checks": [
+    "WorkBuddy resolves the same Initiative, Spec, and Plan from the Registry.",
+    "WorkBuddy starts from Codex's committed source_commit, not an uncommitted worktree.",
+    "WorkBuddy records a receipt with observed commit, checks run, result, and next action.",
+    "Codex verifies the receipt and either accepts it or marks the packet blocked for Human decision."
+  ],
+  "source_commit": "<codex-commit-sha>",
+  "handoff_status": "ready-for-handoff",
+  "receipt": null
+}
+```
+
+The status sequence is `ready-for-handoff` → `executing` → `ready-for-verification` → `accepted` or `blocked`. The smoke test passes only when both Agents can reproduce the sequence using Git commits and the Work Packet fields without relying on private conversation state.
+
 ## Phased implementation
 
-### Phase 0: two-device PoC
+### Phase 0: same-device smoke test
 
-Deploy one pinned Gateway version and have two devices, each using a distinct Agent identity, exercise writes, authorized retrieval, denied access, duplicate requests, concurrent updates, and offline recovery. The PoC does not alter the main ZHarness flow; it produces acceptance evidence and a gap list.
+Run the Codex–WorkBuddy Work Packet described above on one device. The test must prove Registry lookup, committed handoff, receipt return, and Codex verification before any remote memory service is introduced.
+
+### Phase 0b: two-device PoC
+
+After the same-device smoke test passes, deploy one pinned Gateway version and have two devices, each using a distinct Agent identity, exercise writes, authorized retrieval, denied access, duplicate requests, concurrent updates, and offline recovery. The PoC does not alter the main ZHarness flow; it produces acceptance evidence and a gap list.
 
 ### Phase 1: establish the real Seam
 

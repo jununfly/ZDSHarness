@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/proposed/feature/2026-08-19-federated-context.md
-2026-08-19-federated-context.md: 61d1024d436c3c99a860618dba22f7da22586908
-2026-08-19-federated-context.zh.md: e77fcf630de1723d50415307c63f187306836dd3
+2026-08-19-federated-context.md: 79ae93ecfc395212a40a234ca7f0e16b3c1c0b26
+2026-08-19-federated-context.zh.md: b51fa67dd104c042fe581a1a14dcb5573833a667

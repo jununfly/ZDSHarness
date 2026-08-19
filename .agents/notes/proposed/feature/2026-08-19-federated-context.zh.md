@@ -32,6 +32,10 @@ Human-led 的多设备、多 Agent 协作需要带权限过滤的共享上下文
 - 正常网络下跨设备 freshness 达到拟定 p95 目标，网络恢复后没有静默丢失。
 - ZHarness 测试通过同一个 `FederatedContext` Interface 覆盖 TencentDB-Agent-Memory 和 in-memory Provider。
 
+## 同设备第一步
+
+第一步先执行同设备 Codex–WorkBuddy smoke test，再执行两设备 Gateway PoC。稳定设备 slug 为 `shanghai-macbook-01`；Codex 使用 `agent-codex-01`，WorkBuddy 使用 `agent-workbuddy-01`。一个 Work Packet 依次经过 Codex 创建并提交、WorkBuddy 执行并提交 receipt、Codex 验证并接受或请求 Human 阻塞。Git commit 和 receipt 字段是交接证据；私有对话状态和未提交工作树不是交接事实。
+
 ## 风险
 
 TencentDB-Agent-Memory 暴露 version，但可能没有对写入执行 compare-and-swap。其 ACL 实现可能没有覆盖所有 Gateway 路径，集中部署也增加运行和迁移责任。PoC 必须让这些缺口导致提案失败，而不是用调用方假设掩盖。

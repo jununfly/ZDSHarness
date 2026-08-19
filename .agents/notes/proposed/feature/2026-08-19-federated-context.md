@@ -32,6 +32,10 @@ The first PoC verifies identity mapping, ACL enforcement, provenance, idempotenc
 - Normal-network cross-device freshness reaches the proposed p95 target without silent loss after recovery.
 - ZHarness tests exercise the same `FederatedContext` Interface through TencentDB-Agent-Memory and in-memory Providers.
 
+## Same-device first step
+
+The first execution is a same-device Codex–WorkBuddy smoke test, before the two-device Gateway PoC. The stable device slug is `shanghai-macbook-01`; Codex uses `agent-codex-01` and WorkBuddy uses `agent-workbuddy-01`. One Work Packet travels from Codex creation and commit, through WorkBuddy execution and receipt commit, back to Codex verification and acceptance or Human blocking. Git commit and receipt fields are the handoff evidence; private conversation state and uncommitted worktrees are not.
+
 ## Risks
 
 TencentDB-Agent-Memory exposes versions but may not enforce compare-and-swap on writes. Its ACL implementation may not cover every Gateway path, and centralized deployment adds operational and migration ownership. The PoC must fail the proposal rather than conceal any of these gaps with caller-side assumptions.

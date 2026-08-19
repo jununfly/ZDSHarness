@@ -101,11 +101,51 @@ PoC 还需验证：
 
 MyContext 不作为 TencentDB-Agent-Memory 的竞争性替换，而作为潜在的第二生产 Adapter：设备上的个人私有上下文先由 MyContext 摄取和检索，只有经过明确策略筛选、带 owner 和 provenance 的事实才进入团队共享层。共享事实仍由 TencentDB-Agent-Memory 保存，是否发布由 ZHarness/ZAgentic control plane 决定。
 
+## 同设备 Codex–WorkBuddy smoke test
+
+在两设备 PoC 之前，先让同一设备上的 Codex 和 WorkBuddy 通过一个可复现的 Work Packet 验证交接协议。`device_id` 使用稳定的人工命名设备 slug `shanghai-macbook-01`；两个 Agent ID 分别为 `agent-codex-01` 和 `agent-workbuddy-01`。
+
+Work Packet 由 Codex 创建并提交，由 WorkBuddy 执行并确认，再由 Codex 验证并关闭。本地未提交状态不能作为交接事实；source commit 和 receipt 才是交接证据。
+
+```json
+{
+  "work_packet_id": "wp-federated-context-1-1-001",
+  "initiative_id": "zharness",
+  "spec_id": "federated-context",
+  "plan_id": "federated-context-roadmap",
+  "node_id": "1-1",
+  "owner_agent_id": "agent-codex-01",
+  "consumer_agent_id": "agent-workbuddy-01",
+  "device_id": "shanghai-macbook-01",
+  "objective": "Verify same-device Codex-to-WorkBuddy-to-Codex handoff through GitHub-backed state.",
+  "allowed_paths": [
+    "docs/prds/federated-context.md",
+    "docs/plans/federated-context-roadmap.json",
+    "docs/plans/federated-context-roadmap.md"
+  ],
+  "acceptance_checks": [
+    "WorkBuddy resolves the same Initiative, Spec, and Plan from the Registry.",
+    "WorkBuddy starts from Codex's committed source_commit, not an uncommitted worktree.",
+    "WorkBuddy records a receipt with observed commit, checks run, result, and next action.",
+    "Codex verifies the receipt and either accepts it or marks the packet blocked for Human decision."
+  ],
+  "source_commit": "<codex-commit-sha>",
+  "handoff_status": "ready-for-handoff",
+  "receipt": null
+}
+```
+
+状态顺序为 `ready-for-handoff` → `executing` → `ready-for-verification` → `accepted` 或 `blocked`。只有当两个 Agent 都能使用 Git commit 和 Work Packet 字段复现这条顺序，且不依赖私有对话状态时，smoke test 才算通过。
+
 ## 分阶段实施
 
-### Phase 0：两设备 PoC
+### Phase 0：同设备 smoke test
 
-部署一份固定版本的 Gateway，让两台设备分别以独立 Agent 身份完成写入、权限检索、拒绝访问、重复请求、并发更新和断网恢复。PoC 不改 ZHarness 主流程，只产出验收记录和缺口清单。
+先在一台设备上执行上文定义的 Codex–WorkBuddy Work Packet。引入远程 memory 服务之前，测试必须证明 Registry 定位、已提交交接、receipt 回传和 Codex 验证都能走通。
+
+### Phase 0b：两设备 PoC
+
+同设备 smoke test 通过后，部署一份固定版本的 Gateway，让两台设备分别以独立 Agent 身份完成写入、权限检索、拒绝访问、重复请求、并发更新和断网恢复。PoC 不改 ZHarness 主流程，只产出验收记录和缺口清单。
 
 ### Phase 1：建立真实 Seam
 
