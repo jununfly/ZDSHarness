@@ -1349,7 +1349,7 @@
           "note": "决策有多个合理答案时，以团队约束下的可接受集合评估，不用字符串相等替代判断。"
         }
       ],
-      "notes": "10 个中英质量 case × 3 repetitions × 2 arms 与独立 reliability fault corpus 已入库；盲测 Judge 接口已实现，人工 rubric 及基线阈值仍待固化。"
+      "notes": "ZHarness 已在本地提交 9172aa0：10 个双语 quality case 对应不可追改 rubric、annotation 与 Judge calibration 资产，校准结果为 score MAE 2.4、tolerance 命中率 1.0、recommendation agreement 1.0、risk-count MAE 0.1。ZAgentic 已生成双入口 compiler-lock/v2 artifact 并通过 7 个 compiler case 与 10 个 evaluation case；节点暂不完成，因为 9172aa0 尚未推送，doc-sync 仍被既有 docs/zj markdown wrap、双语配对及 events-effects-demo code block 错误阻塞。"
     },
     "1-6-4-4": {
       "id": "1-6-4-4",
@@ -1384,7 +1384,7 @@
   },
   "metadata": {
     "created": "2026-08-15 11:25:33",
-    "updated": "2026-08-19 01:55:29",
+    "updated": "2026-08-19 02:19:23",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZHarness/docs/zj/learning_roadmap.md"
   }
 }
