@@ -1,6 +1,6 @@
 /**
- * SDK-facing JSON-RPC plugin over stdio. An external `cordis.yml` decides
- * whether to load it; see the single-executable Agent Note and package README.
+ * SDK-facing JSON-RPC plugin over stdio. The selected dsh profile decides
+ * whether to load it; see the single-launch Agent Note and package README.
  * Stdout is reserved for protocol frames, so the tree must not load a stdout logger.
  * This plugin answers `shutdown`, disposes the complete root runtime, and exits 0; the app bin
  * owns EOF and signal exits. Keep named plugin exports with no default export so
@@ -20,22 +20,6 @@ export * from './server.ts'
 export const name = 'sdk-jsonrpc-server'
 // Only the agent factory is required; initialize reads the optional LLM seam with ctx.get().
 export const inject = ['agents']
-
-/** Host-owned admission control for the stdio JSON-RPC transport. */
-export interface JsonRpcIngress {
-  /**
-   * Begin reading requests. Idempotent while the plugin is active.
-   * @throws when called through a retained handle after plugin disposal.
-   */
-  start(): void
-}
-
-declare module '@deepseek-ai/cordis' {
-  interface Context {
-    /** JSON-RPC admission control supplied when this server plugin is mounted. */
-    sdkJsonRpcIngress: JsonRpcIngress
-  }
-}
 
 /** JSON-RPC deployment config plus runtime-only test hooks. */
 export interface JsonRpcConfig {
@@ -76,17 +60,6 @@ export function apply(ctx: Context, config: JsonRpcConfig): void {
   const server = new HarnessSdkJsonRpcServer(ctx, transport, {
     maxTokensAsSuccess: resolvedConfig.maxTokensAsSuccess,
   })
-  let started = false
-  let disposed = false
-
-  ctx.provide('sdkJsonRpcIngress', Object.freeze({
-    start(): void {
-      if (disposed) throw new Error('JSON-RPC ingress is disposed')
-      if (started) return
-      started = true
-      transport.start()
-    },
-  }))
 
   // Share one exit task so racing shutdown requests cannot dispose the root or
   // exit the process more than once.
@@ -101,6 +74,16 @@ export function apply(ctx: Context, config: JsonRpcConfig): void {
   }
 
   transport.onRequest(async (method, params) => {
+    // `initialize` is the SDK's readiness boundary. This plugin can activate
+    // before async sibling Loader entries (for example an MCP client's initial
+    // tool discovery), so do not advertise a ready runtime until the complete
+    // current tree has settled. Loader settlement joins entry imports, fiber
+    // lifecycle work, and synchronous effect registration; no scheduler delay
+    // is part of readiness. A hand-built context without Loader remains
+    // immediately usable.
+    if (method === 'initialize') {
+      await ctx.get('loader')?.await()
+    }
     const result = await server.handleRequest(method, params)
     if (method === 'shutdown') {
       // Run after the handler result is written; the task then flushes, disposes, and exits.
@@ -110,8 +93,8 @@ export function apply(ctx: Context, config: JsonRpcConfig): void {
   })
 
   ctx.effect(() => {
+    transport.start()
     return async () => {
-      disposed = true
       await server.shutdown()
       transport.close()
     }
