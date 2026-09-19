@@ -1368,7 +1368,73 @@
       "mode": "exploit",
       "parent": "1-6-4",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "受控基线采用什么实施顺序？",
+          "answer": "采用五阶段顺序：可执行 corpus → production experiment host 与三类 adapter → 真实 API 小样本协议试跑 → 每 arm 30 个成功样本 → Pareto 分析并冻结统计 SLO（B）",
+          "note": "不直接启动 60 次采样。真实 API 小样本协议试跑使用正式配置的少量真实调用验证链路、盲测、费用和恢复语义，但不形成正式基线，也不是商业化或用户试点。"
+        },
+        {
+          "q": "可执行受控 corpus 如何版本化？",
+          "answer": "冻结 controlled-quality-v1 作为协议与校准 fixture，新建 controlled-quality-v2 承载真实 Brief、commit-pinned sealed ledger、重新绑定的 annotation/source spans 与 calibration（B）",
+          "note": "v2 是首个可执行实验事实源；语义变化继续递增版本，不跨版本混合 baseline。"
+        },
+        {
+          "q": "Production experiment host 归谁所有？",
+          "answer": "由 ZHarness research-eval domain 提供通用 host/CLI 与 adapter 接口；Agent adapter 在 ZHarness，ZAgentic skill 通过固定协议接入，ZAgentic 持有研究资产与轻量启动器（B）",
+          "note": "矩阵调度、预算、幂等、durable events、恢复和 receipt 汇总只有一个实现；双 arm 只保留真正不同的 orchestration。"
+        },
+        {
+          "q": "三类 doc-sync 基线债务何时清理？",
+          "answer": "可执行 corpus 与 host 可先在本地推进，但完整 doc-sync 变绿是首次真实 API 小样本协议试跑前的硬门禁，并建立独立路线图节点（B）",
+          "note": "不让文档债务取代实验主线，也不再把它作为真实费用与正式实验事实进入系统后的长期例外。"
+        },
+        {
+          "q": "十个质量 case 如何构成？",
+          "answer": "采用 5 个底层技术问题 × 中英文等价 Brief；每对共享 sealed ledger、rubric 意图和事实真值，只改变自然语言表达（B）",
+          "note": "覆盖五种质量场景并隔离语言差异；翻译无需逐字一致，但约束、判据和预期决策必须等价。"
+        },
+        {
+          "q": "Corpus 的技术主题范围是什么？",
+          "answer": "覆盖多个公开技术领域并保留一个 harness engineering 选型锚点；分别验证多仓选型、单仓深读、证据不足、冲突证据和导航降级（B）",
+          "note": "具体公开仓库和事实由 Agent 调研后提出，避免 corpus 只奖励 harness 领域记忆或随机热门项目偏差。"
+        },
+        {
+          "q": "两个 arm 如何隔离执行？",
+          "answer": "Host 面向统一版本化 JSON adapter protocol；Agent adapter 启动真实 ACP/CLI，skill adapter 启动真实 Python skill 流程，host 只观察一致的请求、结果、超时和退出语义（B）",
+          "note": "统一实验边界、预算与可观测事实，同时保留两条路线真实 orchestration 差异；进程隔离负责可靠取消、超时和崩溃分类。"
+        },
+        {
+          "q": "失败、恢复与补样如何建模？",
+          "answer": "每次 attempt 使用独立 ID 与不可变 terminal receipt；planned cell 为 case × arm × repetition，失败进入可靠性统计，并在批次预算和重试上限内创建 replacement attempt，直到该 cell 获得首个 hard-gate success（B）",
+          "note": "中断的 started-only attempt 先封口为稳定失败再补样；不覆盖历史、不无限重试，质量基线取每个 planned cell 的首个合格成功。"
+        },
+        {
+          "q": "人工真值如何产生并冻结？",
+          "answer": "Agent 根据真实 sealed ledger 生成候选 annotation，Human 审核关键证据、风险和可接受推荐集合并明确批准，随后以内容 hash 冻结整个 v2 资产集（B）",
+          "note": "首个内部实验保留真实 Human approval；进入百人产品化前，将高争议 case 升级为双人独立标注与裁决。"
+        },
+        {
+          "q": "Blind Judge 的独立性口径是什么？",
+          "answer": "Judge 使用独立 prompt/config/session，只接收匿名化报告、共享 sealed ledger 与 rubric；看不到 arm、运行轨迹、人工 annotation 或 recommendation 白名单（B）",
+          "note": "模型供应商可以相同，但 Judge 配置必须独立固定并通过人工 calibration；供应商独立或双 Judge 等数据证明系统性偏差后再升级。"
+        },
+        {
+          "q": "真实 API 小样本协议试跑多大？",
+          "answer": "选择 3 个中英文配对问题：正常多仓选型、冲突证据、导航降级；共 6 case × 2 arm = 12 份报告，每份接受一次 blind Judge，不做 repetition（B）",
+          "note": "试跑覆盖正常路径、语义争议、降级路径与中英文等价性；只验证协议和估算成本，不形成正式 baseline。"
+        },
+        {
+          "q": "Pilot 与正式基线如何限制重试和并发？",
+          "answer": "Pilot 串行且每个 planned cell 最多 2 个 attempt，资产完整性、Judge calibration 或 receipt invariant 失败立即停批；正式 baseline 默认并发 2，每 cell 最多 3 个 attempt，达到 token/费用硬上限或仍无成功结果时停止并报告不完整（B）",
+          "note": "不自动扩大预算。数值预算由 host 完成后的一次 dry-run 真实 token 记录计算，再写入 Manifest 与批次配置。"
+        },
+        {
+          "q": "多设备 × 多 Agent 的总协作拓扑采用什么模型？",
+          "answer": "采用 Human-led federation：Human Lead 跨设备拆解目标、确认关键决策、分配唯一 owner、裁决冲突并授权发布；每台设备是隔离工作单元，内部可运行多个 Agent（B）",
+          "note": "各设备使用独立 worktree/branch；远端 Git、canonical roadmap 与版本化实验资产是共享汇合面，不是自动决策者。真实 API 实验由统一 Coordinator 调度和记账。"
+        }
+      ],
       "notes": ""
     },
     "1-6-4-6": {
@@ -1384,7 +1450,7 @@
   },
   "metadata": {
     "created": "2026-08-15 11:25:33",
-    "updated": "2026-08-19 10:36:44",
+    "updated": "2026-08-19 14:58:40",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZHarness/docs/zj/learning_roadmap.md"
   }
 }
