@@ -27,6 +27,5 @@
 └── [~][Y+] 1-6. ZHarness 使用期：从学习转入构建
     ├── [x][Y+] 1-6-1. 真实 LLM 端到端验证：DEEPSEEK_API_KEY 跑通完整 agent loop
     ├── [x][Y+] 1-6-2. llm 能力包按需精读：遇到 llm 行为问题时带出
-    ├── [x][Y+] 1-6-3. 技术方案调研分析 agent
-    └── [~][Y+] 1-6-4. 技术调研 Agent 可信实验闭环与团队产品化
+    └── [x][Y+] 1-6-3. 技术方案调研分析 agent
 <!-- ROADMAP_SECTION_END -->
